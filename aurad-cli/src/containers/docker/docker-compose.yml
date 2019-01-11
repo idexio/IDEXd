@@ -1,0 +1,53 @@
+version: '3.3'
+            
+services:
+    parity:
+        image: parity/parity:v2.2.5
+        env_file: aurad_config.env
+        volumes:
+            - type: bind
+              source: ${HOME}/.aurad/eth
+              target: /eth
+        command: ["--light", "--on-demand-retry-count=100", "--jsonrpc-interface=all", "--base-path", "/eth"]
+        ports:
+            - "8545:8545"
+            - "8546:8546"
+            - "30303:30303"
+            - "30303:30303/udp"
+        stop_signal: SIGINT
+        stop_grace_period: 20s
+    mysql:
+        image: mysql:5.7
+        env_file: aurad_config.env
+        volumes:
+            - type: bind
+              source: ${HOME}/.aurad/db
+              target: /var/lib/mysql
+        stop_signal: SIGINT
+        stop_grace_period: 20s
+        ports:
+            - "33006:3306"
+    aurad:
+        image: auroradao/aurad:0.1.0
+        depends_on:
+          - "mysql"
+        volumes:
+          - type: bind
+            source: ${HOME}/.aurad/downloads
+            target: /usr/aurad/downloads
+          - type: bind
+            source: ${HOME}/.aurad/ipc
+            target: /usr/aurad/ipc
+        stop_signal: SIGINT
+        stop_grace_period: 20s
+        command: ["start", "pm2.config.js", "--no-daemon", "--only", "worker", "--kill-timeout", "5000"]
+        ports:
+            - "8080:8080"
+            - "8443:8443"
+        env_file: aurad_config.env
+        environment:
+          - RPC_HOST
+          - RPC_PROTOCOL
+          - RPC_PORT
+        links:
+          - "mysql:db.local"

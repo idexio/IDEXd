@@ -1,0 +1,11 @@
+*-debug.log
+*-error.log
+/tmp
+src/containers/docker/shared/db/**/*
+src/containers/docker/shared/eth/**/*
+src/containers/docker/shared/ipc/**/*
+src/containers/docker/shared/downloads/**/*
+src/containers/docker/shared/settings.json
+!src/containers/docker/shared/**/.keep
+!src/containers/docker/shared/**/.npmignore
+node_modules

@@ -1,0 +1,68 @@
+{
+  "name": "aurad",
+  "version": "0.1.0",
+  "description": "Staking software for the AURA token",
+  "main": "lib/shared.js",
+  "scripts": {
+    "prepublish": "babel server -d lib",
+    "build": "babel server -d lib",
+    "start": "pm2 start pm2.config.js --only app",
+    "worker": "pm2 start pm2.config.js --only worker",
+    "dev": "babel-node ./server/index.js",
+    "test": "npm run build && NODE_ENV=test DB_NAME=aurad_staking_test mocha --require @babel/register --require @babel/polyfill"
+  },
+  "author": "",
+  "repository": "github:auroradao/aurad",
+  "license": "LGPL-v3",
+  "homepage": "https://github.com/auroradao/aurad",
+  "bugs": "https://github.com/auroradao/aurad/issues",
+  "dependencies": {
+    "@babel/polyfill": "^7.0.0",
+    "@sentry/node": "^4.4.1",
+    "aws-sdk": "^2.373.0",
+    "bluebird": "^3.5.2",
+    "body-parser": "^1.18.3",
+    "compression": "^1.7.3",
+    "continuation-local-storage": "^3.2.1",
+    "convict": "^4.4.0",
+    "cors": "^2.8.5",
+    "dd-trace": "^0.7.1",
+    "dotenv": "^6.1.0",
+    "express": "^4.16.4",
+    "lodash": "^4.17.11",
+    "moment": "^2.22.2",
+    "mysql2": "^1.6.1",
+    "redis": "^2.8.0",
+    "request": "^2.88.0",
+    "request-promise": "^4.2.2",
+    "require-all": "^3.0.0",
+    "sequelize": "^4.40.0",
+    "typedarray-to-buffer": "^3.1.5",
+    "web3": "^1.0.0-beta.35",
+    "websocket": "^1.0.28",
+    "write-file-atomic": "^2.3.0"
+  },
+  "devDependencies": {
+    "@babel/cli": "^7.1.2",
+    "@babel/core": "^7.1.2",
+    "@babel/node": "^7.0.0",
+    "@babel/preset-env": "^7.1.0",
+    "babel-eslint": "^10.0.1",
+    "eslint": "^5.8.0",
+    "eslint-config-airbnb-base": "^13.1.0",
+    "eslint-plugin-import": "^2.14.0",
+    "eslint-plugin-promise": "^4.0.1",
+    "mocha": "^5.2.0",
+    "nodemon": "^1.18.6",
+    "sequelize-cli": "^5.3.0"
+  },
+  "engines": {
+    "node": ">=10.0.0"
+  },
+  "browserslist": [
+    ">0.2%",
+    "not dead",
+    "not ie <= 11",
+    "not op_mini all"
+  ]
+}

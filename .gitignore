@@ -1,0 +1,9 @@
+lib
+cache/*
+/containers
+downloads/*
+ipc/status.json
+settings.json
+.env
+node_modules
+!.keep

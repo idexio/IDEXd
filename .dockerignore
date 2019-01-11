@@ -1,0 +1,9 @@
+lib
+aurad-cli
+src
+containers
+downloads/*
+snapshots/*
+settings.json
+node_modules
+npm-debug.log
