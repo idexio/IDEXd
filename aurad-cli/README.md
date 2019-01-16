@@ -28,6 +28,7 @@ USAGE
 * [`aura config`](#aura-config)
 * [`aura help [COMMAND]`](#aura-help-command)
 * [`aura logs`](#aura-logs)
+* [`aura restart`](#aura-restart)
 * [`aura start`](#aura-start)
 * [`aura status`](#aura-status)
 * [`aura stop`](#aura-stop)
@@ -74,6 +75,24 @@ OPTIONS
 ```
 
 _See code: [src/commands/logs.js](https://github.com/auroradao/aurad/blob/v0.1.1/src/commands/logs.js)_
+
+## `aura restart`
+
+Describe the command here
+
+```
+USAGE
+  $ aura restart
+
+OPTIONS
+  -n, --name=name  name to print
+
+DESCRIPTION
+  ...
+  Extra documentation goes here
+```
+
+_See code: [src/commands/restart.js](https://github.com/auroradao/aurad/blob/v0.1.0/src/commands/restart.js)_
 
 ## `aura start`
 
