@@ -169,22 +169,21 @@ docker logs -f docker_aurad_1
 #### Stopping AuraD
 
 ```
-aura down
+aura stop
 ```
 
 #### Restarting AuraD
 
 ```
-aura up
+aura start
 ```
 
 #### Upgrading AuraD
 
-To upgrade AuraD, stop the service, upgrade `@auroradao/aurad-cli`, re-run `config`, and restart the service.
+To upgrade AuraD, stop the service, upgrade `@auroradao/aurad-cli`, and restart the service.
 ```
 $ aura down
 $ npm install -g @auroradao/aurad-cli
-$ aura config
 $ aura start
 ```
 Occasionally an upgrade may require running `aura config` before it can start serving traffic.
