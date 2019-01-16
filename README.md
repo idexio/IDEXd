@@ -182,7 +182,7 @@ aura start
 
 To upgrade AuraD, stop the service, upgrade `@auroradao/aurad-cli`, and restart the service.
 ```
-$ aura down
+$ aura stop
 $ npm install -g @auroradao/aurad-cli
 $ aura start
 ```
