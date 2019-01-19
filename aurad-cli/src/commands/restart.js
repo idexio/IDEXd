@@ -1,12 +1,16 @@
 const {Command, flags} = require('@oclif/command');
 const StartCommand = require('./start');
-const StopCommand = require('./start');
+const StopCommand = require('./stop');
 
 class RestartCommand extends Command {
   async run() {
     const {flags} = this.parse(RestartCommand)
-    await StopCommand.run();
-    await StartCommand.run(['--rpc', flags.rpc])
+    await StopCommand.run([]);
+    const opts = [];
+    for (let flag in flags) {
+      opts.push([`--${flag}`, flags[flag]]);
+    }
+    await StartCommand.run(opts);
   }
 }
 
