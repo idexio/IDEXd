@@ -69,6 +69,11 @@ module.exports = class Docker {
     let {stdout} = await exec(`${this.env()} ${cmd} -f ${this.composeFile()} pull ${services.join(' ')}`);
     return(stdout);
   }
+
+  async autoheal() {
+    let [cmd, version] = await this.hasDocker();
+    let {stdout} = await exec(`${cmd} run -d --name autoheal --restart=always -e AUTOHEAL_CONTAINER_LABEL=autoheal -v /var/run/docker.sock:/var/run/docker.sock willfarrell/autoheal || ${cmd} start autoheal`);
+  }
     
   async up(services = ['parity', 'mysql', 'aurad']) {
     this.ensureDirs();
@@ -92,6 +97,11 @@ module.exports = class Docker {
     let [cmd, version] = await this.hasCompose();
     let [dcmd, dversion] = await this.hasDocker();
     let containers = await this.getRunningContainerIds();
+    try {
+      await exec(`${dcmd} stop autoheal`);
+    } catch(e){
+      console.log(e);
+    }
     if (containers['aurad']) {
       console.log('Stopping AuraD');
       try {

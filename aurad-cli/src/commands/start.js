@@ -25,6 +25,7 @@ const start = new Listr([
                 title: 'Launching Local Services',
                 task: async () => {
                   await docker.up(['parity', 'mysql']);
+                  await docker.autoheal();
                 }
             }
         ]);

@@ -14,6 +14,13 @@ services:
             - "8546:8546"
             - "30303:30303"
             - "30303:30303/udp"
+        healthcheck:
+          test: ["CMD", "curl", "-f", "-H", "Content-Type: application/json", "--data", "{\"jsonrpc\":\"2.0\",\"method\":\"eth_blockNumber\",\"params\":[],\"id\":1}", "http://localhost:8545"]
+          interval: 1m
+          timeout: 10s
+          retries: 3
+        labels:
+            - "autoheal"
         stop_signal: SIGINT
         stop_grace_period: 20s
     mysql:
@@ -41,6 +48,13 @@ services:
         stop_signal: SIGINT
         stop_grace_period: 20s
         command: ["start", "pm2.config.js", "--no-daemon", "--only", "worker", "--kill-timeout", "5000"]
+        healthcheck:
+          test: ["CMD", "curl", "-f", "--insecure", "https://localhost:8443/health"]
+          interval: 1m
+          timeout: 10s
+          retries: 3
+        labels:
+            - "autoheal"
         ports:
             - "8080:8080"
             - "8443:8443"
