@@ -104,23 +104,27 @@ class Worker extends EventEmitter {
     return (lastBlock);
   }
 
-  async downloadAll(urls, concurrency = 2) {
+  async downloadAll(urls) {
     let result;
     let snapshotsDownloaded = 0;
+    const pathsDownloaded = [];
+    
     const updater = setInterval(async () => {
       await this.writeStatus({ downloadsCurrent: snapshotsDownloaded });
     }, 500);
     try {
-      await Promise.mapSeries(urls, async (path) => {
+      urls.forEach(async (path) => {
         if (Worker._closed === true) return Promise.resolve();
         snapshotsDownloaded += 1;
         printit(`Downloading snapshot ${snapshotsDownloaded} of ${urls.length}(${(100 * snapshotsDownloaded / urls.length).toFixed(2)}%)`);
         const snapshot = await this.getSnapshot(path, false);
-        if (snapshot === null && parseInt(path.split('_')[0]) < 7000000) {
-          throw new Error('Missing snapshot for ' + path);
+        if (snapshot !== null) {
+          pathsDownloaded.push(path);
+        } else {
+          printit(`WARNING: snapshot ${path} not found.`);
         }
         printit(`${path} done`);
-      }, { concurrency });
+      });
       result = Promise.resolve();
     } catch (e) {
       console.log('Error downloading snapshot');
@@ -131,8 +135,7 @@ class Worker extends EventEmitter {
     }
     
     snapshotsDownloaded = urls.length;
-    await this.writeStatus({ downloadsCurrent: snapshotsDownloaded });
-    
+    await this.writeStatus({ downloadsCurrent: snapshotsDownloaded });  
     return (result);
   }
 
@@ -169,14 +172,14 @@ class Worker extends EventEmitter {
       downloadsCurrent: 1,
     });
 
-    await this.downloadAll(paths);
+    const downloadedPaths = await this.downloadAll(paths);
 
     let snapshotsProcessed = 0; let
       prevSnapshotsProcessed = 0;
 
     await this.writeStatus({
       snapshotsStart: 1,
-      snapshotsEnd: paths.length,
+      snapshotsEnd: downloadedPaths.length,
       snapshotsCurrent: 1,
     });
 
@@ -189,24 +192,16 @@ class Worker extends EventEmitter {
     
     endBlock = minBlock;   
     try {
-      await Promise.mapSeries(paths, async (path) => {
+      downloadedPaths.forEach(async (path) => {
         if (Worker._closed === true) return Promise.resolve();
-
         const transactions = await this.getSnapshot(path);
-        if (transactions && Array.isArray(transactions)) {
-          await this.processTransactions(this.filterTrades(transactions), lastBlock, true);
-          snapshotsProcessed += 1;         
-          endBlock = Math.max(endBlock, parseInt(path.split('_')[1]));
-          printit(`Loaded snapshot ${snapshotsProcessed} of ${paths.length}(${(100 * snapshotsProcessed / paths.length).toFixed(2)}%) -- ${endBlock}`);
-          return Promise.resolve(snapshotsProcessed);
-        } else {
-          if (parseInt(path.split('_')[0]) < 7000000) {
-            return Promise.reject(new Error('Bad transaction data for ' + path));
-          } else {
-            snapshotsProcessed += 1;
-            return Promise.resolve(snapshotsProcessed);
-          }
+        if (transactions === null || !Array.isArray(transactions)) {
+          break;
         }
+        await this.processTransactions(this.filterTrades(transactions), lastBlock, true);
+        snapshotsProcessed += 1;     
+        endBlock = Math.max(endBlock, parseInt(path.split('_')[1]));
+        printit(`Loaded snapshot ${snapshotsProcessed} of ${paths.length}(${(100 * snapshotsProcessed / paths.length).toFixed(2)}%) -- ${endBlock}`);
       });
     } finally {
       await this.writeStatus({ snapshotsCurrent: snapshotsProcessed });
@@ -472,25 +467,19 @@ class Worker extends EventEmitter {
       }
     } catch (e) {
       result = null;
-      let retries = 3;
       let uri;
-
-      while (!result && retries > 0) {
-        try {
-          retries -= 1;
-          uri = `${process.env.SNAPSHOT_HOST}${path}`;
-          const download = await request({
-            uri,
-            gzip: true,
-            timeout: 300000,
-          });
-          result = JSON.parse(download);
-          await writeFileAtomicPromise(file, JSON.stringify(result));
-          return (result);
-        } catch (e2) {
-          console.log('Snapshot not found, retry');
-          await new Promise(resolve => setTimeout(resolve, 100));
-        }
+      try {
+        uri = `${process.env.SNAPSHOT_HOST}${path}`;
+        const download = await request({
+          uri,
+          gzip: true,
+          timeout: 30000,
+        });
+        result = JSON.parse(download);
+        await writeFileAtomicPromise(file, JSON.stringify(result));
+        return (result);
+      } catch (e2) {
+        console.log('Snapshot not found');
       }
     }
     return (result);
