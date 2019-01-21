@@ -6,6 +6,8 @@ const cliUtil = require('../shared/util');
 const Docker = require('../shared/docker');
 const package_json = require('../../package.json');
 const homedir = require('os').homedir();
+const semver = require('semver');
+const registryUri = 'https://registry.npmjs.org/@auroradao/aurad-cli';
 
 class StatusCommand extends Command {
   async run() {
@@ -20,8 +22,17 @@ class StatusCommand extends Command {
       console.log("Error loading wallet, please run 'aura config' first");
       return;
     }
-    
+
     console.log(`aurad-cli v${package_json.version}`);
+
+    const packageInfo = await request({ uri: registryUri, json: true });
+    const latestVersion = packageInfo['dist-tags'].latest;
+
+    if (semver.lt(package_json.version, latestVersion)) {
+      console.log(`Latest version: ${'v'+latestVersion} (update available)`);
+    } else {
+      console.log(`Latest version: ${chalk.green('v'+latestVersion)}`);
+    }
     console.log(`Cold wallet: ${json.coldWallet}`);
     console.log(`Hot wallet: ${json.hotWallet.address}`);
     
