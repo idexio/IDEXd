@@ -9,7 +9,8 @@
     "start": "pm2 start pm2.config.js --only app",
     "worker": "pm2 start pm2.config.js --only worker",
     "dev": "babel-node ./server/index.js",
-    "test": "npm run build && NODE_ENV=test DB_NAME=aurad_staking_test mocha --require @babel/register --require @babel/polyfill"
+    "integration-tests": "NODE_ENV=test PORT=8888 DB_NAME=staking_coordinator_test mocha --exit --require @babel/register --require @babel/polyfill --recursive test/integration --timeout 60000",
+    "integration-tests:watch": "NODE_ENV=test PORT=8888 DB_NAME=staking_coordinator_test mocha --watch --require @babel/register --require @babel/polyfill --recursive test/integration --timeout 10000"
   },
   "author": "",
   "repository": "github:auroradao/aurad",

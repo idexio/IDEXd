@@ -3,6 +3,7 @@ import EventEmitter from 'events';
 import request from 'request-promise';
 import fsWithCallbacks from 'fs';
 import writeFileAtomic from 'write-file-atomic';
+import { getTokenMap, initTokens, tradeToJson, filterByReceipts } from './utils/trade_utils';
 import Db from './db';
 import Lock from './lock';
 import { web3 } from './helpers';
@@ -31,31 +32,12 @@ class Worker extends EventEmitter {
     Object.assign(this, {
       firstBlock, chunkSize, currentBlock: firstBlock, processed: 0,
     });
-    this._lock = new Lock();
+    initTokens(tokenMap);
   }
 
   static async build(firstBlock = IDEX_FIRST_BLOCK, chunkSize = 50) {
-    const w = new Worker(firstBlock, chunkSize);
-    await w.loadTokenMap();
-    w.setTokenMapTimer();
-    return (w);
-  }
-  
-  setTokenMapTimer() {
-    setInterval(60000, () => {
-      this.loadTokenMap();
-    });
-  }
-
-  async loadTokenMap() {
-    const tokenMap = request({
-      method: 'POST',
-      uri: 'https://api.idex.market/returnCurrenciesWithPairs',
-      json: true,
-    });
-    if (tokenMap) {
-      this.tokenMap = tokenMap;
-    }
+    const tokenMap = await getTokenMap();
+    return new Worker(tokenMap, firstBlock, chunkSize);
   }
 
   async close() {
@@ -72,30 +54,6 @@ class Worker extends EventEmitter {
       clearTimeout(timeout);
       resolve();
     });
-  }
-
-  initTokens(tokenMap) {
-    this.pairs = {};
-    this.tokensBySymbol = {};
-    this.tokensByAddress = {};
-
-    tokenMap.tokens.forEach(obj => {
-      this.tokensBySymbol[obj.symbol] = obj;
-      this.tokensByAddress[obj.address] = obj;
-    });
-
-    for (const fromToken in tokenMap.pairs) {
-      if (fromToken && typeof fromToken === 'string') {
-        this.tokensBySymbol[fromToken].isBase = true;
-        this.pairs[fromToken] = {};
-        tokenMap.pairs[fromToken].forEach(toToken => { this.pairs[fromToken][toToken] = true; });
-      }
-    }
-  }
-
-  isBaseTokenAddress(address) {
-    const token = this.tokensByAddress[address];
-    return (token && this.tokensBySymbol[token.symbol].isBase === true);
   }
 
   async lastBlockProcessed() {
@@ -215,216 +173,6 @@ class Worker extends EventEmitter {
     return txs.filter(tx => {
       if (tx.txreceipt_status && tx.txreceipt_status === '0') return (false);
       return (tx.to && tx.input && tx.to.toLowerCase() === IDEX1_ADDRESS.toLowerCase() && tx.input.substr(0, 10) === '0xef343588');
-    });
-  }
-
-  async filterByReceipts(txs) {
-    const validTxs = [];
-
-    // if receipts are already populated, just read the status
-    txs = txs.filter(tx => {
-      if (tx.txreceipt_status === '0') return (false);
-      if (tx.txreceipt_status === '1') {
-        validTxs.push(tx);
-      }
-      return (true);
-    });
-
-    if (txs.length === 0) return Promise.resolve(validTxs);
-    const txsByHash = {};
-    txs.forEach(tx => { (txsByHash[tx.hash] = tx); });
-
-    const count = txs.length;
-    let processed = 0;
-
-    return new Promise((resolve, reject) => {
-      const cb = (err, result) => {
-        if (err) reject(err);
-        else {
-          if (!result) reject(new Error('receipt is null'));
-          processed += 1;
-          const tx = txsByHash[result.transactionHash];
-          if (result.status === true) {
-            Object.assign(tx, result);
-            validTxs.push(txsByHash[result.transactionHash]);
-          } else if (typeof result.status === 'undefined') {
-            if (result.gasUsed !== tx.gas) {
-              Object.assign(tx, result);
-              validTxs.push(txsByHash[result.transactionHash]);
-            }
-          }
-          if (processed === count) resolve(validTxs);
-        }
-      };
-
-      const batch = new web3.BatchRequest();
-      txs.map(tx => batch.add(web3.eth.getTransactionReceipt.request(tx.hash, cb)));
-      batch.execute();
-    });
-  }
-
-  async tradeToJson(tx) {
-
-    // parsing the input with slice() and BigInt is drastically faster than web3 decodeParameters
-    // replace the 'old' style here:
-    // const args = web3.eth.abi.decodeParameters(['uint256[8]', 'address[4]', 'uint8[2]', 'bytes32[4]'], `0x${tx.input.substr(10)}`);
-    // const [amountBuy, amountSell, expires, orderNonce, amount, tradeNonce, feeMake, feeTake] = args[0]; // eslint-disable-line
-    // const [tokenBuy, tokenSell, maker, taker] = args[1].map(arg => arg.toLowerCase());
-
-    tx.input = tx.input.substr(10);
-    const param = (input, index, offset = 0) => input.substr(index*64 + offset, 64 - offset);
-    const [
-      amountBuy,
-      amountSell,
-      expires,
-      orderNonce,
-      amount,
-      tradeNonce,
-      feeMake,
-      feeTake,
-      tokenBuy,
-      tokenSell,
-      maker,
-      taker
-    ] = [
-      BigInt('0x'+param(tx.input, 0)).toString(),
-      BigInt('0x'+param(tx.input, 1)).toString(),
-      BigInt('0x'+param(tx.input, 2)).toString(),
-      BigInt('0x'+param(tx.input, 3)).toString(),
-      BigInt('0x'+param(tx.input, 4)).toString(),
-      BigInt('0x'+param(tx.input, 5)).toString(),
-      BigInt('0x'+param(tx.input, 6)).toString(),
-      BigInt('0x'+param(tx.input, 7)).toString(),
-      '0x'+param(tx.input, 8, 24),
-      '0x'+param(tx.input, 9, 24),
-      '0x'+param(tx.input, 10, 24),
-      '0x'+param(tx.input, 11, 24),
-    ];
-
-    // some old trades are no longer in our token map
-    // they may have had their contract move, or be de-listed
-    if (!this.tokensByAddress[tokenSell] && tokenSell !== '0x0000000000000000000000000000000000000000') {
-      if (process.env.FULL_NODE === '1') {
-        try {
-          await this._lock.acquire();
-          if (!this.tokensByAddress[tokenSell]) {
-            const obj = await getTokenDetailsFromContract(tokenSell, tx.blockNumber);
-            this.tokensBySymbol[obj.symbol] = obj;
-            this.tokensByAddress[tokenSell] = obj;
-          }
-        } finally {
-          this._lock.release();
-        }
-      } else {
-        const obj = { name: tokenSell, symbol: tokenSell, decimals: 18 };
-        this.tokensBySymbol[obj.symbol] = obj;
-        this.tokensByAddress[tokenSell] = obj;
-      }
-    }
-
-    if (!this.tokensByAddress[tokenBuy] && tokenBuy !== '0x0000000000000000000000000000000000000000') {
-      if (process.env.FULL_NODE === '1') {
-        try {
-          await this._lock.acquire();
-          if (!this.tokensByAddress[tokenBuy]) {
-            const obj = await getTokenDetailsFromContract(tokenBuy, tx.blockNumber);
-            this.tokensBySymbol[obj.symbol] = obj;
-            this.tokensByAddress[tokenBuy] = obj;
-          }
-        } finally {
-          this._lock.release();
-        }
-      } else {
-        const obj = { name: tokenBuy, symbol: tokenBuy, decimals: 18 };
-        this.tokensBySymbol[obj.symbol] = obj;
-        this.tokensByAddress[tokenBuy] = obj;
-      }
-    }
-
-    let symbolBuy = this.tokensByAddress[tokenBuy].symbol;
-    let symbolSell = this.tokensByAddress[tokenSell].symbol;
-
-    if ((symbolBuy === '') && (tokenBuy.toLowerCase() === '0xc66ea802717bfb9833400264dd12c2bceaa34a6d')) symbolBuy = 'MKR';
-    if ((symbolSell === '') && (tokenSell.toLowerCase() === '0xc66ea802717bfb9833400264dd12c2bceaa34a6d')) symbolSell = 'MKR';
-
-    const blockNumber = parseInt(tx.blockNumber);
-    const timestamp = parseInt(tx.timeStamp || tx.timestamp);
-
-    const type = this.isBaseTokenAddress(tokenBuy) ? 'buy' : 'sell';
-    const buyerFee = (type === 'sell') ? feeTake : feeMake;
-    const sellerFee = (type === 'sell') ? feeMake : feeTake;
-    const gasFee = (BigInt(tx.gasUsed || 0) * BigInt(tx.gasPrice)).toString();
-
-    const transactionHash = tx.hash;
-
-    const tokenBuyDecimals = this.tokensByAddress[tokenBuy].decimals;
-    const tokenSellDecimals = this.tokensByAddress[tokenSell].decimals;
-
-    let numerator = BigInt(0);
-    let denominator = BigInt(0);
-    let numeratorDecimals = 0;
-    let denominatorDecimals = 0;
-    let amountDecimals = 0;
-
-    if (type === 'buy') {
-      [numerator, denominator, numeratorDecimals, denominatorDecimals, amountDecimals] = [
-        BigInt(amountBuy),
-        BigInt(amountSell),
-        Number(tokenBuyDecimals),
-        Number(tokenSellDecimals),
-        Number(tokenBuyDecimals),
-      ];
-      amountDecimals = tokenBuyDecimals;
-    } else {
-      [numerator, denominator, numeratorDecimals, denominatorDecimals, amountDecimals] = [
-        BigInt(amountSell),
-        BigInt(amountBuy),
-        Number(tokenSellDecimals),
-        Number(tokenBuyDecimals),
-        Number(tokenSellDecimals),
-      ];
-    }
-
-    // force an extra 36 digits so we can safely divide with ints
-    numerator *= BigInt(10) ** BigInt(36);
-    let rawPrice = (numerator / denominator).toString();
-    const decimalOffset = denominatorDecimals - numeratorDecimals - 36;
-
-    rawPrice = rawPrice.padStart(Math.abs(decimalOffset) + 1, '0');
-    let priceString = `${rawPrice.substr(0, rawPrice.length + decimalOffset)}.${rawPrice.substr(Math.max(0, rawPrice.length + decimalOffset), rawPrice.length)}`;
-    if (priceString.slice(-1) === '.') priceString += '0';
-
-    let amountString = amount.padStart(amountDecimals + 1, '0');
-    amountString = `${amountString.substr(0, amountString.length - amountDecimals)}.${amountString.substr(Math.max(0, amountString.length - amountDecimals), amountString.length)}`;
-    if (amountString.slice(-1) === '.') amountString += '0';
-
-    let gasString = gasFee.padStart(19, '0');
-    gasString = `${gasString.substr(0, gasString.length - 18)}.${gasString.substr(Math.max(0, gasString.length - 18), gasFee.length)}`;
-    if (gasString.slice(-1) === '.') gasString += '0';
-
-    let { nonce } = tx;
-    
-    nonce = String(nonce).padStart(20, '0');
-    
-    return Promise.resolve({
-      blockNumber,
-      timestamp,
-      type,
-      maker,
-      taker,
-      tokenBuy,
-      tokenSell,
-      symbolBuy,
-      symbolSell,
-      amount: amountString,
-      amountBuy,
-      amountSell,
-      buyerFee,
-      sellerFee,
-      gasFee: gasString,
-      transactionHash,
-      price: priceString,
-      nonce,
     });
   }
 
@@ -614,7 +362,7 @@ class Worker extends EventEmitter {
       let temp = [];
       while (transactions.length > 0) {
         const toFilter = transactions.splice(0, 250);
-        const withReceipts = await this.filterByReceipts(toFilter);
+        const withReceipts = await filterByReceipts(toFilter);
         temp = temp.concat(withReceipts);
       }
       transactions = temp;
@@ -637,7 +385,7 @@ class Worker extends EventEmitter {
       stream.end();
     }
 
-    const json = await Promise.all(transactions.map(async tx => this.tradeToJson(tx)));    
+    const json = await Promise.all(transactions.map(async tx => tradeToJson(tx)));
     while (json.length > 0) {
       const records = json.splice(0, 100);
       try {

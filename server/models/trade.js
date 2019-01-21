@@ -28,6 +28,7 @@ const schema = () => ({
     validate: {
       is: /^(0x)?[0-9a-f]{64}$/i,
     },
+    unique: true
   },
   maker: {
     type: Sequelize.STRING,

@@ -1,36 +1,7 @@
 import { Op } from 'sequelize';
 import crypto from 'crypto';
+import { trimDecimals, formatTrade, tradeForHash, tradeToJson } from '../utils/trade_utils';
 import ApiController from './api_controller';
-
-function trimDecimals(str) {
-  str = str.toString();
-  if (str.indexOf('.') > -1) {
-    while (str.slice(-1) === '0') str = str.slice(0, -1);
-    if (str.slice(-1) === '.') str = str.slice(0, -1);
-  }
-  return (str);
-}
-
-// @todo this needs better BigNumber formatting
-function formatTrade(trade) {
-  return {
-    date: new Date(trade.timestamp * 1000).toISOString().replace(/T/, ' ').replace(/\..+/, ''),
-    amount: trimDecimals((trade.type === 'sell') ? trade.amount : (trade.amount / trade.price).toString()),
-    type: trade.type,
-    total: trimDecimals(trade.type === 'sell' ? trade.amount * trade.price : trade.amount),
-    price: trimDecimals(trade.price),
-    orderHash: '0x0000000000000000000000000000000000000000000000000000000000000000',
-    uuid: trade.transactionHash,
-    buyerFee: (trade.buyerFee * trade.price).toString(),
-    sellerFee: (trade.sellerFee * trade.price).toString(),
-    gasFee: '0', /* (trade.gasFee * trade.price).toString(), */
-    timestamp: trade.timestamp,
-    maker: trade.maker,
-    taker: trade.taker,
-    transactionHash: trade.transactionHash,
-    usdValue: '0.0000000000000000',
-  };
-}
 
 export default class AuradController extends ApiController {
   routes() {
@@ -39,6 +10,43 @@ export default class AuradController extends ApiController {
 
     app.get('/health', (req, res) => {
       res.send('OK');
+    });
+    
+    app.put('/trades/:hash', async (req, res) => {
+      try {
+        const hash = req.params.hash;
+        const trade = await tradeForHash(hash);
+        if (null !== trade) {
+          const json = await tradeToJson(trade);
+          const created = await db.sequelize.models.Trade.upsert(json);
+          if (false === created) {
+            res.status(200).json({'message': 'trade updated'});
+          } else {
+            res.status(201).json({'message': 'trade created'});
+          }
+        } else {
+          res.status(400).json({'message': 'invalid trade hash'});
+        }
+      } catch(e) {
+        console.log(e);
+        res.status(500).json({'message': e.message});
+      }
+    });
+    
+    app.delete('/trades/:hash', async (req, res) => {
+      const hash = req.params.hash;
+      const trade = await Trade.findOne({
+        where: { transactionHash: hash }
+      });
+      if (!trade) {
+        return res.status(404).json({'message': 'trade not found'});
+      }
+      const tx = await tradeForHash(hash);
+      if (null !== tx) {
+        return res.status(409).json({'message': 'trade is valid'});
+      }
+      await trade.destroy();
+      return res.status(200).json({'message': 'invalid trade successfully removed'});
     });
 
     app.post('/returnTradeHistoryMeta', async (req, res) => {

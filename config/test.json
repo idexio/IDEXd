@@ -1,8 +1,4 @@
 {
-  // switch databases since test runs will blow it away
-  redis: {
-    db: '1'
-  },
   db: {
     name: 'staking_coordinator_test'
   }
