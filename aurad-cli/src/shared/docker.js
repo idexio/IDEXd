@@ -15,7 +15,7 @@ module.exports = class Docker {
   }
   
   env() {
-    const rpc = new URL(this.rpcUrl);
+    const rpc = new Url(this.rpcUrl);
     const RPC_HOST = `${rpc.hostname}${rpc.pathname}`;
     const RPC_PROTOCOL = rpc.protocol.slice(0,-1);
     const RPC_PORT = rpc.port || (RPC_PROTOCOL === 'http' ? '80' : (RPC_PROTOCOL === 'https' ? '443' : ''));

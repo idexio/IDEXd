@@ -26,26 +26,36 @@ function printit(it) {
 }
 
 class Worker extends EventEmitter {
-  constructor(tokenMap, firstBlock, chunkSize) {
+  constructor(firstBlock, chunkSize) {
     super();
     Object.assign(this, {
-      tokenMap, firstBlock, chunkSize, currentBlock: firstBlock, processed: 0,
+      firstBlock, chunkSize, currentBlock: firstBlock, processed: 0,
     });
-    this.initTokens(tokenMap);
     this._lock = new Lock();
   }
 
   static async build(firstBlock = IDEX_FIRST_BLOCK, chunkSize = 50) {
-    const tokenMap = await Worker.getTokenMap();
-    return new Worker(tokenMap, firstBlock, chunkSize);
+    const w = new Worker(firstBlock, chunkSize);
+    await w.loadTokenMap();
+    w.setTokenMapTimer();
+    return (w);
+  }
+  
+  setTokenMapTimer() {
+    setInterval(60000, () => {
+      this.loadTokenMap();
+    });
   }
 
-  static async getTokenMap() {
-    return request({
+  async loadTokenMap() {
+    const tokenMap = request({
       method: 'POST',
       uri: 'https://api.idex.market/returnCurrenciesWithPairs',
       json: true,
     });
+    if (tokenMap) {
+      this.tokenMap = tokenMap;
+    }
   }
 
   async close() {
