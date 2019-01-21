@@ -8,6 +8,7 @@ import Lock from './lock';
 import { web3 } from './helpers';
 import { getTokenDetailsFromContract } from './contracts';
 import { IDEX1_ADDRESS, IDEX_FIRST_BLOCK, SNAPSHOT_SIZE } from './constants';
+import * as Sentry from '@sentry/node';
 
 const fs = fsWithCallbacks.promises;
 const writeFileAtomicPromise = Promise.promisify(writeFileAtomic);
@@ -545,6 +546,7 @@ class Worker extends EventEmitter {
       } catch (e) {
         console.log(e);
         console.log('Error processing transactions, retry in 5 seconds');
+        Sentry.captureException(e);
         await new Promise((resolve) => setTimeout(resolve, 5000));
         continue;
       }

@@ -13,6 +13,12 @@ import { keepAliveHeaders } from './shared';
 import migrate from './migrate';
 import { web3, waitForRpc } from './helpers';
 import { IDEX_FIRST_BLOCK } from './constants';
+import * as Sentry from '@sentry/node';
+
+Sentry.init({
+  dsn: 'https://2c0043771883437e874c7a2e28fcbd1b@sentry.io/1352235',
+  environment: process.env.SENTRY_ENV || process.env.NODE_ENV,
+});
 
 const fs = require('fs').promises;
 
@@ -89,6 +95,7 @@ const keepalive = async () => {
     }
   } catch (e) {
     console.log(`STAKING OFFLINE`);
+    Sentry.captureException(e);
     console.log(e);
   }
 };
