@@ -151,12 +151,14 @@ class Worker extends EventEmitter {
       await Promise.mapSeries(paths, async (path) => {
         if (Worker._closed === true) return Promise.resolve();
         const transactions = await this.getSnapshot(path);
-        if (transactions === null) return Promise.reject();
-        await this.processTransactions(this.filterTrades(transactions), lastBlock, true);
-        snapshotsProcessed += 1;     
+        snapshotsProcessed += 1;
+        if (transactions === null) return Promise.resolve();
+        await this.processTransactions(this.filterTrades(transactions), lastBlock, true);     
         endBlock = Math.max(endBlock, parseInt(path.split('_')[1]));
         printit(`Loaded snapshot ${snapshotsProcessed} of ${paths.length}(${(100 * snapshotsProcessed / paths.length).toFixed(2)}%) -- ${endBlock}`);
       });
+    } catch(e) {
+      console.log(e);
     } finally {
       await this.writeStatus({ snapshotsCurrent: snapshotsProcessed });
       clearInterval(updater);
