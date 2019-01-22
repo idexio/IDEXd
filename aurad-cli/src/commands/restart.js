@@ -8,7 +8,8 @@ class RestartCommand extends Command {
     await StopCommand.run([]);
     const opts = [];
     for (let flag in flags) {
-      opts.push([`--${flag}`, flags[flag]]);
+      opts.push(`--${flag}`);
+      opts.push(flags[flag]);
     }
     await StartCommand.run(opts);
   }

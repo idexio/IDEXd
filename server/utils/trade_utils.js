@@ -134,11 +134,54 @@ export async function filterByReceipts(txs) {
 }
 
 export async function tradeToJson(tx) {
-  /* eslint-disable no-undef */
-  const args = web3.eth.abi.decodeParameters(['uint256[8]', 'address[4]', 'uint8[2]', 'bytes32[4]'], `0x${tx.input.substr(10)}`);
-  const [amountBuy, amountSell, expires, orderNonce, amount, tradeNonce, feeMake, feeTake] = args[0]; // eslint-disable-line
-  const [tokenBuy, tokenSell, maker, taker] = args[1].map(arg => arg.toLowerCase());
+  // parsing the input with slice() and BigInt is drastically faster than web3 decodeParameters
+  // replace the 'old' style here:
+  // const args = web3.eth.abi.decodeParameters(['uint256[8]', 'address[4]', 'uint8[2]', 'bytes32[4]'], `0x${tx.input.substr(10)}`);
+  // const [amountBuy, amountSell, expires, orderNonce, amount, tradeNonce, feeMake, feeTake] = args[0]; // eslint-disable-line
+  // const [tokenBuy, tokenSell, maker, taker] = args[1].map(arg => arg.toLowerCase());
 
+  tx.input = tx.input.substr(10);
+  const param = (input, index, offset = 0) => input.substr(index*64 + offset, 64 - offset);
+  const [
+    amountBuy,
+    amountSell,
+    expires,
+    orderNonce,
+    amount,
+    tradeNonce,
+    feeMake,
+    feeTake,
+    tokenBuy,
+    tokenSell,
+    maker,
+    taker
+  ] = [
+    BigInt('0x'+param(tx.input, 0)).toString(),
+    BigInt('0x'+param(tx.input, 1)).toString(),
+    BigInt('0x'+param(tx.input, 2)).toString(),
+    BigInt('0x'+param(tx.input, 3)).toString(),
+    BigInt('0x'+param(tx.input, 4)).toString(),
+    BigInt('0x'+param(tx.input, 5)).toString(),
+    BigInt('0x'+param(tx.input, 6)).toString(),
+    BigInt('0x'+param(tx.input, 7)).toString(),
+    '0x'+param(tx.input, 8, 24),
+    '0x'+param(tx.input, 9, 24),
+    '0x'+param(tx.input, 10, 24),
+    '0x'+param(tx.input, 11, 24),
+  ];
+
+  if (!tokensByAddress[tokenSell] && tokenSell !== '0x0000000000000000000000000000000000000000') {
+    const obj = { name: tokenSell, symbol: tokenSell, decimals: 18 };
+    tokensBySymbol[obj.symbol] = obj;
+    tokensByAddress[tokenSell] = obj;
+  }
+
+  if (!tokensByAddress[tokenBuy] && tokenBuy !== '0x0000000000000000000000000000000000000000') {
+    const obj = { name: tokenBuy, symbol: tokenBuy, decimals: 18 };
+    tokensBySymbol[obj.symbol] = obj;
+    tokensByAddress[tokenBuy] = obj;
+  }
+    
   let symbolBuy = tokensByAddress[tokenBuy].symbol;
   let symbolSell = tokensByAddress[tokenSell].symbol;
 

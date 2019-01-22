@@ -7,7 +7,7 @@ const execFile = util.promisify(require('child_process').execFile);
 const homedir = require('os').homedir();
 const mkdirp = require('mkdirp');
 const Promise = require('bluebird');
-const Url = require('url');
+const url = require('url');
 
 module.exports = class Docker {
   constructor(rpcUrl) {
@@ -15,7 +15,7 @@ module.exports = class Docker {
   }
   
   env() {
-    const rpc = new Url(this.rpcUrl);
+    const rpc = url.parse(this.rpcUrl);
     const RPC_HOST = `${rpc.hostname}${rpc.pathname}`;
     const RPC_PROTOCOL = rpc.protocol.slice(0,-1);
     const RPC_PORT = rpc.port || (RPC_PROTOCOL === 'http' ? '80' : (RPC_PROTOCOL === 'https' ? '443' : ''));

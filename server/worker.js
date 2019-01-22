@@ -27,7 +27,7 @@ function printit(it) {
 }
 
 class Worker extends EventEmitter {
-  constructor(firstBlock, chunkSize) {
+  constructor(tokenMap, firstBlock, chunkSize) {
     super();
     Object.assign(this, {
       firstBlock, chunkSize, currentBlock: firstBlock, processed: 0,
@@ -71,7 +71,7 @@ class Worker extends EventEmitter {
       await this.writeStatus({ downloadsCurrent: snapshotsDownloaded });
     }, 500);
     try {
-      urls.forEach(async (path) => {
+      await Promise.mapSeries(urls, async (path) => {
         if (Worker._closed === true) return Promise.resolve();
         snapshotsDownloaded += 1;
         printit(`Downloading snapshot ${snapshotsDownloaded} of ${urls.length}(${(100 * snapshotsDownloaded / urls.length).toFixed(2)}%)`);
@@ -79,22 +79,20 @@ class Worker extends EventEmitter {
         if (snapshot !== null) {
           pathsDownloaded.push(path);
         } else {
-          printit(`WARNING: snapshot ${path} not found.`);
+          console.log(`WARNING: snapshot ${path} not found.`);
         }
         printit(`${path} done`);
       });
-      result = Promise.resolve();
     } catch (e) {
-      console.log('Error downloading snapshot');
-      result = Promise.reject(e);
+      console.log(e);
     } finally {
       await this.writeStatus({ downloadsCurrent: snapshotsDownloaded });
       clearInterval(updater);
     }
-    
+
     snapshotsDownloaded = urls.length;
-    await this.writeStatus({ downloadsCurrent: snapshotsDownloaded });  
-    return (result);
+    await this.writeStatus({ downloadsCurrent: snapshotsDownloaded }); 
+    return (pathsDownloaded);
   }
 
   async warpSync(maxBlock, skipTo) {
@@ -131,7 +129,7 @@ class Worker extends EventEmitter {
     });
 
     const downloadedPaths = await this.downloadAll(paths);
-
+    
     let snapshotsProcessed = 0; let
       prevSnapshotsProcessed = 0;
 
@@ -150,12 +148,10 @@ class Worker extends EventEmitter {
     
     endBlock = minBlock;   
     try {
-      downloadedPaths.forEach(async (path) => {
+      await Promise.mapSeries(paths, async (path) => {
         if (Worker._closed === true) return Promise.resolve();
         const transactions = await this.getSnapshot(path);
-        if (transactions === null || !Array.isArray(transactions)) {
-          break;
-        }
+        if (transactions === null) return Promise.reject();
         await this.processTransactions(this.filterTrades(transactions), lastBlock, true);
         snapshotsProcessed += 1;     
         endBlock = Math.max(endBlock, parseInt(path.split('_')[1]));
@@ -204,8 +200,8 @@ class Worker extends EventEmitter {
   }
 
   async getSnapshot(path, load = true) {
-    let result; const
-      file = `./downloads${path}`;
+    let result;
+    const file = `./downloads${path}`;
     try {
       if (load === true) {
         result = await fs.readFile(file);
@@ -221,7 +217,7 @@ class Worker extends EventEmitter {
         const download = await request({
           uri,
           gzip: true,
-          timeout: 30000,
+          timeout: 30000
         });
         result = JSON.parse(download);
         await writeFileAtomicPromise(file, JSON.stringify(result));
@@ -396,7 +392,6 @@ class Worker extends EventEmitter {
       } catch (e) {
         if (Worker._closed !== true) {
           console.log('Aggregate Error!');
-          e.forEach(err => console.log(err));
           throw (e);
         }
       }
