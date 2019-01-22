@@ -45,7 +45,7 @@ function trimDecimals(str) {
 }
 
 // @todo this needs better BigNumber formatting
-function formatTrade(trade) {
+export function formatTrade(trade) {
   return {
     date: new Date(trade.timestamp * 1000).toISOString().replace(/T/, ' ').replace(/\..+/, ''),
     amount: trimDecimals((trade.type === 'sell') ? trade.amount : (trade.amount / trade.price).toString()),
