@@ -14,10 +14,6 @@ AuraD is software that enables the [IDEX](https://idex.market/) community to sta
 
 In order to be eligible to participate in Aura Staking, you must have a wallet that holds a minimum of 10,000 AURA for a minimum of 7 days. Dropping below a 10,000 AURA balance, even for a brief period, will reset the incubation period.
 
-#### No 7-day requirement at launch
-
-*On launch, the 7-day requirement will be suspended for 3 days! Any wallet with 10,000 AURA, regardless of how recently the AURA was transferred there, can start staking immediately.*
-
 ### Hardware / VPS
 
 AuraD is designed to run on a computer or VPS that is continually connected to the internet with a stable IP address and inbound connectivity.
