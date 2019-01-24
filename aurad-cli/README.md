@@ -16,7 +16,7 @@ $ npm install -g @auroradao/aurad-cli
 $ aura COMMAND
 running command...
 $ aura (-v|--version|version)
-@auroradao/aurad-cli/0.1.1 darwin-x64 node-v10.12.0
+@auroradao/aurad-cli/0.1.2 darwin-x64 node-v10.12.0
 $ aura --help [COMMAND]
 USAGE
   $ aura COMMAND
@@ -43,7 +43,7 @@ USAGE
   $ aura config
 ```
 
-_See code: [src/commands/config.js](https://github.com/auroradao/aurad/blob/v0.1.1/src/commands/config.js)_
+_See code: [src/commands/config.js](https://github.com/auroradao/aurad/blob/v0.1.2/src/commands/config.js)_
 
 ## `aura help [COMMAND]`
 
@@ -74,25 +74,21 @@ OPTIONS
   -n, --name=name  name of log to print (aura, parity or mysql)
 ```
 
-_See code: [src/commands/logs.js](https://github.com/auroradao/aurad/blob/v0.1.1/src/commands/logs.js)_
+_See code: [src/commands/logs.js](https://github.com/auroradao/aurad/blob/v0.1.2/src/commands/logs.js)_
 
 ## `aura restart`
 
-Describe the command here
+Restart aura background services
 
 ```
 USAGE
   $ aura restart
 
 OPTIONS
-  -n, --name=name  name to print
-
-DESCRIPTION
-  ...
-  Extra documentation goes here
+  -r, --rpc=rpc  rpc server
 ```
 
-_See code: [src/commands/restart.js](https://github.com/auroradao/aurad/blob/v0.1.0/src/commands/restart.js)_
+_See code: [src/commands/restart.js](https://github.com/auroradao/aurad/blob/v0.1.2/src/commands/restart.js)_
 
 ## `aura start`
 
@@ -106,7 +102,7 @@ OPTIONS
   -r, --rpc=rpc  rpc server
 ```
 
-_See code: [src/commands/start.js](https://github.com/auroradao/aurad/blob/v0.1.1/src/commands/start.js)_
+_See code: [src/commands/start.js](https://github.com/auroradao/aurad/blob/v0.1.2/src/commands/start.js)_
 
 ## `aura status`
 
@@ -117,7 +113,7 @@ USAGE
   $ aura status
 ```
 
-_See code: [src/commands/status.js](https://github.com/auroradao/aurad/blob/v0.1.1/src/commands/status.js)_
+_See code: [src/commands/status.js](https://github.com/auroradao/aurad/blob/v0.1.2/src/commands/status.js)_
 
 ## `aura stop`
 
@@ -128,7 +124,7 @@ USAGE
   $ aura stop
 ```
 
-_See code: [src/commands/stop.js](https://github.com/auroradao/aurad/blob/v0.1.1/src/commands/stop.js)_
+_See code: [src/commands/stop.js](https://github.com/auroradao/aurad/blob/v0.1.2/src/commands/stop.js)_
 
 ## `aura up`
 
@@ -139,5 +135,5 @@ USAGE
   $ aura up
 ```
 
-_See code: [src/commands/up.js](https://github.com/auroradao/aurad/blob/v0.1.1/src/commands/up.js)_
+_See code: [src/commands/up.js](https://github.com/auroradao/aurad/blob/v0.1.2/src/commands/up.js)_
 <!-- commandsstop -->

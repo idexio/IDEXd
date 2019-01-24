@@ -28,7 +28,7 @@ services:
         ports:
             - "33006:3306"
     aurad:
-        image: auroradao/aurad:0.1.1
+        image: auroradao/aurad:0.1.2
         depends_on:
           - "mysql"
         volumes:

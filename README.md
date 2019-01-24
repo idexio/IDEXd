@@ -175,7 +175,7 @@ aura stop
 #### Restarting AuraD
 
 ```
-aura start
+aura restart
 ```
 
 #### Upgrading AuraD
