@@ -32,7 +32,7 @@ const start = new Listr([
     },
     {
         title: 'Updating IDEX Trade History',
-        task: () => {
+        task: async () => {
           return new Listr([
             {
                 title: 'Synchronizing Ethereum Node',
@@ -46,7 +46,8 @@ const start = new Listr([
     },
     {
         title: 'Writing IDEX Trades',
-        task: () => {
+        task: async () => {
+          await docker.up(['aurad']);
           return new rxjs.Observable(observer => {
             let progress = 0;
             let timer = setInterval(async () => {
