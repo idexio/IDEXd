@@ -2,6 +2,7 @@ require('dotenv').config({ path: `${__dirname}/../containers/docker/aurad_config
 
 const commandExists = require('command-exists');
 const util = require('util');
+const fs = require('fs');
 const exec = util.promisify(require('child_process').exec);
 const execFile = util.promisify(require('child_process').execFile);
 const homedir = require('os').homedir();
@@ -32,12 +33,15 @@ module.exports = class Docker {
     
     const dirs = [
       `${homedir}/.aurad/db`,
-      `${homedir}/.aurad/eth`,
       `${homedir}/.aurad/ipc`,
       `${homedir}/.aurad/downloads`
     ];
     
     await Promise.map(dirs, dir => mkdirp(dir));
+
+    if (process.getuid && process.getuid() === 0) {
+      console.warn('[WARNING] running `aura` as root is not recommended');
+    }
   }
   
   async requireDocker() {
