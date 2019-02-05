@@ -21,7 +21,27 @@ module.exports = class Parity {
     this.web3 = new Web3(new Web3.providers.HttpProvider(rpcHost));
     this.contract = new this.web3.eth.Contract(AURA_INTERFACE, AURA_ADDRESS);
   }
-  
+
+  async tryPeersMessage() {
+    try {
+      const peers = await request({
+        uri: this.rpcHost,
+        method: 'POST',
+        json: {
+          "method": "parity_netPeers",
+          "params":[],
+          "id": Date.now(),
+          "jsonrpc": "2.0"
+        }
+      });
+      if (peers && peers.result) {
+        return `RPC Connected (${peers.result.connected}/${peers.result.max} peers)`;
+      }
+    } catch(e) {
+      return 'Waiting for RPC';
+    }
+  }
+
   // if parity gives status, return that
   // if parity is not synching, check if the latest block is recent enough
   async isSynced(gracePeriod = 300) {
@@ -50,17 +70,22 @@ module.exports = class Parity {
       let timer = setInterval(async () => {
         try {
           let syncing = await this.isSynced();
-          if (syncing === false) progress = 1;
-          else {
+          if (syncing === false) {
+            progress = 1;
+          } else {
             let currentBlock = Number(syncing.currentBlock);
             let startingBlock = Number(syncing.startingBlock);
             let highestBlock = Number(syncing.highestBlock);
-        
-            progress = (currentBlock - startingBlock) / (highestBlock - startingBlock);
-            message = `${currentBlock}/${highestBlock}`;
+
+            if (startingBlock === 0 && highestBlock === 1) {
+              message = await this.tryPeersMessage();
+            } else {
+              progress = (currentBlock - startingBlock) / (highestBlock - startingBlock);
+              message = `${currentBlock}/${highestBlock}`;
+            }
           }
         } catch(e) {
-          message = chalk.red(e);
+          message = await this.tryPeersMessage();
         }
         if (progress < 1) {
           observer.next(util.createBar(progress, process.stdout.columns - 12 - message.length, message));
