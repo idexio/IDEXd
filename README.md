@@ -127,7 +127,7 @@ npm install -g @auroradao/aurad-cli
 ```
 aura config
 ```
-AuraD provides prompts asking for a staking wallet that contains at least 10,000 AURA for 7 days. Go to [MyEtherWallet](https://www.myetherwallet.com/signmsg.html) or your preferred wallet software to sign the challenge and provide the `sig` value to prove that you control the wallet.
+AuraD provides prompts asking for a staking wallet that contains at least 10,000 AURA for 7 days. Go to [MyEtherWallet](https://www.myetherwallet.com/interface/sign-message) or your preferred wallet software to sign the challenge and provide the `sig` value to prove that you control the wallet.
 
 AuraD employs a cold-wallet design so that staked funds never need to leave the staking wallet for maximum security.
 
