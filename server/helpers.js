@@ -7,7 +7,6 @@ import config from './config';
 const rpcHost = `${config.rpc.protocol}://${config.rpc.host.split('/')[0]}:${config.rpc.port}/${config.rpc.host.split('/').slice(1).join('/')}`;
 const web3 = new Web3(new Web3.providers.HttpProvider(rpcHost));
 const contract = new web3.eth.Contract(constants.AURA_INTERFACE, constants.AURA_ADDRESS);
-Promise.promisifyAll(web3.eth);
 
 async function getBalance(staker, blockNumber) {
   return contract.methods.balanceOf(staker).call(null, blockNumber);
