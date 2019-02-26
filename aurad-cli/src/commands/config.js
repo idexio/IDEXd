@@ -14,7 +14,7 @@ const messages = require('../shared/messages');
 const BigNumber = require('bignumber.js');
 const homedir = require('os').homedir();
 
-const STAKING_HOST = 'https://sc.idex.market';
+const { STAKING_HOST } = require('../shared/config');
 const parity = new Parity('http://offline');
 
 const docker = new Docker();

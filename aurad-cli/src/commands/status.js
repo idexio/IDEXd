@@ -8,6 +8,7 @@ const package_json = require('../../package.json');
 const homedir = require('os').homedir();
 const semver = require('semver');
 const registryUri = 'https://registry.npmjs.org/@auroradao/aurad-cli';
+const { STAKING_HOST } = require('../shared/config');
 
 class StatusCommand extends Command {
   async run() {
@@ -54,7 +55,7 @@ class StatusCommand extends Command {
       console.log(`Staking: ${chalk.red('offline')} [${new Date()}]`);
     }
     
-    const uri = `https://sc.idex.market/wallet/${json.coldWallet}/reward-summary`;
+    const uri = `${STAKING_HOST}/wallet/${json.coldWallet}/reward-summary`;
     const values = await request({uri, json:true});
     
     for(let key in values.summary) {
