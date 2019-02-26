@@ -3,6 +3,7 @@ import EventEmitter from 'events';
 import request from 'request-promise';
 import fsWithCallbacks from 'fs';
 import writeFileAtomic from 'write-file-atomic';
+import AWS from 'aws-sdk';
 import { getTokenMap, initTokens, tradeToJson, filterByReceipts } from './utils/trade_utils';
 import Db from './db';
 import Lock from './lock';
@@ -13,8 +14,30 @@ import * as Sentry from '@sentry/node';
 
 const fs = fsWithCallbacks.promises;
 const writeFileAtomicPromise = Promise.promisify(writeFileAtomic);
-
 const db = new Db();
+
+const s3 = new AWS.S3();
+
+async function listSnapshots() {
+  const params = { Bucket: 'aura-snapshots-prod' };
+  const snapshots = [];
+  let response = null;
+  do {
+    response = await (new Promise((resolve, reject) => {
+      s3.makeUnauthenticatedRequest('listObjectsV2', params, (err, data) => {
+        if (err) {
+          reject(err);
+        } else {
+          resolve(data);
+        }
+      });
+    }));
+    response.Contents.map(object => snapshots.push('/'+object.Key));
+    params.ContinuationToken = response.NextContinuationToken;
+  } while(response && response.IsTruncated == true);
+
+  return snapshots;
+}
 
 function printit(it) {
   if (process.stdout.clearLine) {
@@ -70,10 +93,16 @@ class Worker extends EventEmitter {
     let startBlock; let endBlock;
     const minBlock = lastBlock - (lastBlock % SNAPSHOT_SIZE);
     const lastSnapBlock = maxBlock - SNAPSHOT_SIZE;
+    const allSnapshots = await listSnapshots();
+    const snapshotExists = {};
+    allSnapshots.forEach(snap => snapshotExists[snap] = true);
 
     for (startBlock = minBlock; startBlock <= lastSnapBlock; startBlock += SNAPSHOT_SIZE) {
       endBlock = startBlock + SNAPSHOT_SIZE - 1;
-      paths.push(`/${startBlock}_${endBlock}`);
+      const path = `/${startBlock}_${endBlock}`;
+      if (snapshotExists[path] === true) {
+        paths.push(path);
+      }
     }
     
     let snapshotsProcessed = 0; let
@@ -103,7 +132,7 @@ class Worker extends EventEmitter {
 
     // download 1 chunk at a time in the background (no await here)
     const downloader = Promise.mapSeries(chunked, async (chunk) => {
-      await Promise.all(chunk.map(async path => await this.getSnapshot(path)))
+      await Promise.all(chunk.map(async path => await this.getSnapshot(path, false, 2)))
     });
 
     try {
@@ -111,13 +140,17 @@ class Worker extends EventEmitter {
       // wait up to 60 seconds for a file to appear on disk from the downloader
       await Promise.mapSeries(paths, async (path) => {
         if (Worker._closed === true) return Promise.resolve();
-        await this.waitForFile(path, 60000);
-        const transactions = await this.getSnapshot(path);
+        try {
+          await this.waitForFile(path, 60000);
+        } catch(e) {
+          await this.getSnapshot(path, false, 2);
+        }
+        const transactions = await this.getSnapshot(path, true, 0);
         if (transactions === null) return Promise.reject();
         await this.processTransactions(this.filterTrades(transactions), lastBlock, true);
         snapshotsProcessed += 1;     
         endBlock = Math.max(endBlock, parseInt(path.split('_')[1]));
-        printit(`Loaded snapshot ${snapshotsProcessed} of ${paths.length}(${(100 * snapshotsProcessed / paths.length).toFixed(2)}%) -- ${endBlock}`);
+        printit(`Loaded snapshot ${snapshotsProcessed} of ${paths.length}(${(100 * snapshotsProcessed / paths.length).toFixed(2)}%)`);
       });
     } catch(e) {
       console.log(e);
@@ -177,7 +210,7 @@ class Worker extends EventEmitter {
     })).timeout(ttl, 'timeout ' + path);
   }
 
-  async getSnapshot(path, load = true) {
+  async getSnapshot(path, load = true, retries = 2) {
     let result;
     const file = `./downloads${path}`;
     try {
@@ -205,6 +238,9 @@ class Worker extends EventEmitter {
         return (result);
       } catch (e2) {
         console.log('Snapshot not found ' + uri);
+        if (retries > 0) {
+          return await this.getSnapshot(path, load, retries - 1);
+        }
       }
     }
     return (result);
