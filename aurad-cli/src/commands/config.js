@@ -94,7 +94,7 @@ class ConfigCommand extends Command {
     let balanceFormatted = (new BigNumber(balance)).dividedBy(new BigNumber('1000000000000000000')).toString();
     
     console.log(`\n    Your staked ${chalk.cyan('AURA')} balance is ${balanceFormatted}.`);
-    console.log(`    Use https://www.myetherwallet.com/signmsg.html or your preferred wallet software to sign this *exact* message:\n    ${chalk.blue.bgWhite(challenge)}${chalk.white.bgBlack('  ')}\n`);
+    console.log(`    Use https://www.myetherwallet.com/interface/sign-message or your preferred wallet software to sign this *exact* message:\n    ${chalk.blue.bgWhite(challenge)}${chalk.white.bgBlack('  ')}\n`);
 
     let signature = await cli.prompt('    "sig" value', {type: 'mask'});
     
