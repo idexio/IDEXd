@@ -153,11 +153,16 @@ const startKeepAlive = () => {
 };
 
 (async () => {
+  await db.waitFor();
   if (process.env.AUTO_MIGRATE === '1') {
-    await migrate();
+    try {
+      await migrate();
+    } catch(e) {
+      console.log('DB migration failed, exiting');
+      process.exit(1);
+    }
   }
   await loadWallet();
-  await db.waitFor();
   await waitForRpc();
   await buildServer();
   await api();
