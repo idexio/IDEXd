@@ -62,39 +62,6 @@ class Worker extends EventEmitter {
     return (lastBlock);
   }
 
-  async downloadAll(urls) {
-    let result;
-    let snapshotsDownloaded = 0;
-    const pathsDownloaded = [];
-    
-    const updater = setInterval(async () => {
-      await this.writeStatus({ downloadsCurrent: snapshotsDownloaded });
-    }, 500);
-    try {
-      await Promise.mapSeries(urls, async (path) => {
-        if (Worker._closed === true) return Promise.resolve();
-        snapshotsDownloaded += 1;
-        printit(`Downloading snapshot ${snapshotsDownloaded} of ${urls.length}(${(100 * snapshotsDownloaded / urls.length).toFixed(2)}%)`);
-        const snapshot = await this.getSnapshot(path, false);
-        if (snapshot !== null) {
-          pathsDownloaded.push(path);
-        } else {
-          console.log(`WARNING: snapshot ${path} not found.`);
-        }
-        printit(`${path} done`);
-      });
-    } catch (e) {
-      console.log(e);
-    } finally {
-      await this.writeStatus({ downloadsCurrent: snapshotsDownloaded });
-      clearInterval(updater);
-    }
-
-    snapshotsDownloaded = urls.length;
-    await this.writeStatus({ downloadsCurrent: snapshotsDownloaded }); 
-    return (pathsDownloaded);
-  }
-
   async warpSync(maxBlock, skipTo) {
     const lastBlock = await this.lastBlockProcessed();
     if (process.env.WARP_DISABLED === '1' || lastBlock >= skipTo) return [lastBlock + 1, false];
@@ -108,34 +75,13 @@ class Worker extends EventEmitter {
       endBlock = startBlock + SNAPSHOT_SIZE - 1;
       paths.push(`/${startBlock}_${endBlock}`);
     }
-
-    if (paths.length === 0) {
-      await this.writeStatus({
-        warping: false,
-        polling: false,
-        downloadsStart: 0,
-        downloadsEnd: 0,
-        downloadsCurrent: 0,
-      });
-      return [lastBlock + 1, false];
-    }
-
-    await this.writeStatus({
-      warping: true,
-      polling: false,
-      downloadsStart: 1,
-      downloadsEnd: paths.length,
-      downloadsCurrent: 1,
-    });
-
-    const downloadedPaths = await this.downloadAll(paths);
     
     let snapshotsProcessed = 0; let
       prevSnapshotsProcessed = 0;
 
     await this.writeStatus({
       snapshotsStart: 1,
-      snapshotsEnd: downloadedPaths.length,
+      snapshotsEnd: paths.length,
       snapshotsCurrent: 1,
     });
 
@@ -146,14 +92,30 @@ class Worker extends EventEmitter {
       prevSnapshotsProcessed = snapshotsProcessed;
     }, 500);
     
-    endBlock = minBlock;   
+    endBlock = minBlock;
+
+    // break snapshots into chunks of 4 for parallel download
+    const chunked = [];
+    let i = 0;
+    while (i < paths.length) {
+      chunked.push(paths.slice(i, i += 4));
+    }
+
+    // download 1 chunk at a time in the background (no await here)
+    const downloader = Promise.mapSeries(chunked, async (chunk) => {
+      await Promise.all(chunk.map(async path => await this.getSnapshot(path)))
+    });
+
     try {
+      // process one snapshot at a time into the database
+      // wait up to 60 seconds for a file to appear on disk from the downloader
       await Promise.mapSeries(paths, async (path) => {
         if (Worker._closed === true) return Promise.resolve();
+        await this.waitForFile(path, 60000);
         const transactions = await this.getSnapshot(path);
-        snapshotsProcessed += 1;
-        if (transactions === null) return Promise.resolve();
-        await this.processTransactions(this.filterTrades(transactions), lastBlock, true);     
+        if (transactions === null) return Promise.reject();
+        await this.processTransactions(this.filterTrades(transactions), lastBlock, true);
+        snapshotsProcessed += 1;     
         endBlock = Math.max(endBlock, parseInt(path.split('_')[1]));
         printit(`Loaded snapshot ${snapshotsProcessed} of ${paths.length}(${(100 * snapshotsProcessed / paths.length).toFixed(2)}%) -- ${endBlock}`);
       });
@@ -201,6 +163,20 @@ class Worker extends EventEmitter {
     });
   }
 
+  async waitForFile(path, ttl) {
+    const file = `./downloads${path}`;
+    await (new Promise(async (resolve) => {
+      while(true) {
+        try {
+          await fs.access(file, fsWithCallbacks.constants.R_OK);
+          resolve();
+        } catch(e) {
+          await new Promise(resolve => setTimeout(resolve, 500));
+        }
+      }
+    })).timeout(ttl, 'timeout ' + path);
+  }
+
   async getSnapshot(path, load = true) {
     let result;
     const file = `./downloads${path}`;
@@ -219,13 +195,16 @@ class Worker extends EventEmitter {
         const download = await request({
           uri,
           gzip: true,
-          timeout: 30000
+          forever: true,
+          pool: {
+            maxSockets: 5
+          }
         });
         result = JSON.parse(download);
         await writeFileAtomicPromise(file, JSON.stringify(result));
         return (result);
       } catch (e2) {
-        console.log('Snapshot not found');
+        console.log('Snapshot not found ' + uri);
       }
     }
     return (result);

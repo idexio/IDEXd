@@ -25,6 +25,7 @@ const start = new Listr([
                 title: 'Launching Local Services',
                 task: async () => {
                   await docker.up(['parity', 'mysql']);
+                  await docker.autoheal();
                 }
             }
         ]);
@@ -32,7 +33,7 @@ const start = new Listr([
     },
     {
         title: 'Updating IDEX Trade History',
-        task: () => {
+        task: async () => {
           return new Listr([
             {
                 title: 'Synchronizing Ethereum Node',
@@ -41,54 +42,13 @@ const start = new Listr([
                   return parity.syncObservable();
                 },
                 enabled: ctx => (docker.rpcIsCustom() !== true),
-            },
-            {
-                title: 'Downloading IDEX Snapshots',
-                task: async () => {
-                  let obj = {};                  
-                  
-                  while(!obj.mysql) {
-                    obj = await docker.getRunningContainerIds();
-                    await new Promise(resolve => setTimeout(resolve, 1000));
-                  }
-                  
-                  await docker.up(['aurad']);
-                  
-                  return new rxjs.Observable(observer => {
-                    let progress = 0;
-                    let message = '';
-                    let timer = setInterval(async () => {
-                      try {
-                        let status = await cliUtil.getAuradStatus(docker);
-                        let {downloadsStart, downloadsCurrent, downloadsEnd, polling, keepAlive} = status;
-                        if (downloadsStart && downloadsCurrent && downloadsEnd) {
-                          if (downloadsStart == downloadsEnd) progress = 1;
-                          else progress = (downloadsCurrent - downloadsStart) / (downloadsEnd - downloadsStart);
-                        } else {
-                          // no downloads being tracked, and polling flag is on
-                          if (polling && polling === true) {
-                            progress = 1;
-                          }
-                        }
-                        message = Number(100*progress).toFixed(2)+"%";
-                      } catch(e) {
-                        //message = e.toString();
-                      }
-                      if (progress < 1) {
-                        observer.next(cliUtil.createBar(progress, process.stdout.columns  - 12 - message.length, message));
-                      } else {
-                        clearInterval(timer);
-                        observer.complete();
-                      }
-                    }, 500);
-                  });
-                }
-            }            
+            }
         ], {concurrent: false});}
     },
     {
         title: 'Writing IDEX Trades',
-        task: () => {
+        task: async () => {
+          await docker.up(['aurad']);
           return new rxjs.Observable(observer => {
             let progress = 0;
             let timer = setInterval(async () => {

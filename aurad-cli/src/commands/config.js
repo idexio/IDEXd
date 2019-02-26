@@ -112,8 +112,8 @@ class ConfigCommand extends Command {
     }
     
     console.log('    Wallet signature confirmed.');
-    
-    let newAccount = await parity.web3.eth.accounts.create();
+
+    let newAccount = await parity.web3.eth.accounts.create(crypto.randomBytes(64).toString('hex'));
     
     try {   
       let result = await submitChallenge(coldWallet, newAccount.address, signature);  
