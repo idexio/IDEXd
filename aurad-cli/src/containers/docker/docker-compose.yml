@@ -64,6 +64,7 @@ services:
           - RPC_HOST
           - RPC_PROTOCOL
           - RPC_PORT
+          - STAKING_HOST
         links:
           - "mysql:db.local"
 volumes:
