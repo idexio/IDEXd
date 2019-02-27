@@ -35,8 +35,14 @@ class StatusCommand extends Command {
       console.log(`Latest version: ${chalk.green('v'+latestVersion)}`);
     }
     console.log(`Cold wallet: ${json.coldWallet}`);
-    console.log(`Hot wallet: ${json.hotWallet.address}`);
     
+    let uri = `${STAKING_HOST}/wallet/${json.coldWallet}/spot-balances`;
+    const { balance, total, isQualified, dateAvailable } = await request({uri, json:true});
+    
+    const description = (isQualified === true) ? '' : ` (eligible for staking at ${dateAvailable})`;
+    console.log(`Staked AURA: ${Number(balance).toFixed(2)} AURA ${description}`);
+    console.log(`Total Staked AURA: ${Number(total).toFixed(2)} AURA`);
+
     try {
       const { keepAlive } = await cliUtil.getAuradStatus(docker);
       if (keepAlive) {
@@ -55,7 +61,7 @@ class StatusCommand extends Command {
       console.log(`Staking: ${chalk.red('offline')} [${new Date()}]`);
     }
     
-    const uri = `${STAKING_HOST}/wallet/${json.coldWallet}/reward-summary`;
+    uri = `${STAKING_HOST}/wallet/${json.coldWallet}/reward-summary-v2`;
     const values = await request({uri, json:true});
     
     for(let key in values.summary) {

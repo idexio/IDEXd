@@ -15,10 +15,12 @@ import { web3, waitForRpc } from './helpers';
 import { IDEX_FIRST_BLOCK } from './constants';
 import * as Sentry from '@sentry/node';
 
-Sentry.init({
-  dsn: 'https://2c0043771883437e874c7a2e28fcbd1b@sentry.io/1352235',
-  environment: process.env.SENTRY_ENV || process.env.NODE_ENV,
-});
+if (process.env.DISABLE_SENTRY !== '1') {
+  Sentry.init({
+    dsn: 'https://2c0043771883437e874c7a2e28fcbd1b@sentry.io/1352235',
+    environment: process.env.SENTRY_ENV || process.env.NODE_ENV,
+  });
+}
 
 const fs = require('fs').promises;
 
