@@ -1,3 +1,5 @@
+.env
+.git
 lib
 aurad-cli
 src

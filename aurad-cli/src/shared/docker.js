@@ -2,12 +2,14 @@ require('dotenv').config({ path: `${__dirname}/../containers/docker/aurad_config
 
 const commandExists = require('command-exists');
 const util = require('util');
+const fs = require('fs');
 const exec = util.promisify(require('child_process').exec);
 const execFile = util.promisify(require('child_process').execFile);
 const homedir = require('os').homedir();
 const mkdirp = require('mkdirp');
 const Promise = require('bluebird');
 const url = require('url');
+const { STAKING_HOST } = require('../shared/config');
 
 module.exports = class Docker {
   constructor(rpcUrl) {
@@ -20,7 +22,7 @@ module.exports = class Docker {
     const RPC_PROTOCOL = rpc.protocol.slice(0,-1);
     const RPC_PORT = rpc.port || (RPC_PROTOCOL === 'http' ? '80' : (RPC_PROTOCOL === 'https' ? '443' : ''));
     
-    return `HOME=${homedir} RPC_HOST=${RPC_HOST} RPC_PROTOCOL=${RPC_PROTOCOL} RPC_PORT=${RPC_PORT}`;
+    return `HOME=${homedir} RPC_HOST=${RPC_HOST} RPC_PROTOCOL=${RPC_PROTOCOL} RPC_PORT=${RPC_PORT} STAKING_HOST=${STAKING_HOST}`;
   }
   
   rpcIsCustom() {
@@ -32,12 +34,15 @@ module.exports = class Docker {
     
     const dirs = [
       `${homedir}/.aurad/db`,
-      `${homedir}/.aurad/eth`,
       `${homedir}/.aurad/ipc`,
       `${homedir}/.aurad/downloads`
     ];
     
     await Promise.map(dirs, dir => mkdirp(dir));
+
+    if (process.getuid && process.getuid() === 0) {
+      console.warn('[WARNING] running `aura` as root is not recommended');
+    }
   }
   
   async requireDocker() {
@@ -69,6 +74,11 @@ module.exports = class Docker {
     let {stdout} = await exec(`${this.env()} ${cmd} -f ${this.composeFile()} pull ${services.join(' ')}`);
     return(stdout);
   }
+
+  async autoheal() {
+    let [cmd, version] = await this.hasDocker();
+    let {stdout} = await exec(`${cmd} run -d --name autoheal --restart=always -e AUTOHEAL_CONTAINER_LABEL=autoheal -v /var/run/docker.sock:/var/run/docker.sock willfarrell/autoheal || ${cmd} start autoheal`);
+  }
     
   async up(services = ['parity', 'mysql', 'aurad']) {
     this.ensureDirs();
@@ -92,6 +102,11 @@ module.exports = class Docker {
     let [cmd, version] = await this.hasCompose();
     let [dcmd, dversion] = await this.hasDocker();
     let containers = await this.getRunningContainerIds();
+    try {
+      await exec(`${dcmd} stop autoheal`);
+    } catch(e){
+      console.log(e);
+    }
     if (containers['aurad']) {
       console.log('Stopping AuraD');
       try {

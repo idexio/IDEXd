@@ -14,7 +14,7 @@ const messages = require('../shared/messages');
 const BigNumber = require('bignumber.js');
 const homedir = require('os').homedir();
 
-const STAKING_HOST = 'https://sc.idex.market';
+const { STAKING_HOST } = require('../shared/config');
 const parity = new Parity('http://offline');
 
 const docker = new Docker();
@@ -94,7 +94,7 @@ class ConfigCommand extends Command {
     let balanceFormatted = (new BigNumber(balance)).dividedBy(new BigNumber('1000000000000000000')).toString();
     
     console.log(`\n    Your staked ${chalk.cyan('AURA')} balance is ${balanceFormatted}.`);
-    console.log(`    Use https://www.myetherwallet.com/signmsg.html or your preferred wallet software to sign this *exact* message:\n    ${chalk.blue.bgWhite(challenge)}${chalk.white.bgBlack('  ')}\n`);
+    console.log(`    Use https://www.myetherwallet.com/interface/sign-message or your preferred wallet software to sign this *exact* message:\n    ${chalk.blue.bgWhite(challenge)}${chalk.white.bgBlack('  ')}\n`);
 
     let signature = await cli.prompt('    "sig" value', {type: 'mask'});
     
@@ -112,8 +112,8 @@ class ConfigCommand extends Command {
     }
     
     console.log('    Wallet signature confirmed.');
-    
-    let newAccount = await parity.web3.eth.accounts.create();
+
+    let newAccount = await parity.web3.eth.accounts.create(crypto.randomBytes(64).toString('hex'));
     
     try {   
       let result = await submitChallenge(coldWallet, newAccount.address, signature);  
