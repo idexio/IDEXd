@@ -162,6 +162,45 @@ Logs are the best source of information to understand what's happening with Aura
 docker logs -f docker_aurad_1
 ```
 
+#### Checking your staking status
+
+Display your node's current status and earnings history
+```
+aura status
+```
+
+*Staked AURA*
+
+The current AURA balance you are staking to earn credits. If you are staking > 10,000 AURA it will reflect immediately as long as your 10k minimum has incubated for 7+ days. Note that any delays in updating your balance will be fixed at payout time based on the timestamp of the block in which you added the AURA.
+
+*Total Staking AURA*
+
+The current staked AURA balance across all active stakers (updated approximately once per minute)
+
+*Current Period*
+
+The current active staking period. Payouts are made in ETH at the end of each period, based on your credits earned during that period.
+
+*My Period Credits*
+
+Credits earned this period for this wallet address. 1 credit = 10k AURA staked for 5 minutes with your node online.
+
+*Total Period Credits*
+
+Total credits across all stakers during this period.
+
+*Last Period Earnings*
+
+Your final earnings in ETH from last period. Note that payouts less than $3 USD based on ETH spot price at period close are rolled over to the next period.
+
+*Last Period Credits*
+
+Your final credits from the previous period, from which your payout was calculated.
+
+*Earnings History*
+
+To view your complete earnings history, this URL returns a detailed CSV document.
+
 #### Stopping AuraD
 
 ```
