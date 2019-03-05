@@ -19,16 +19,16 @@ if (process.env.DISABLE_SENTRY !== '1') {
   Sentry.init({
     dsn: 'https://2c0043771883437e874c7a2e28fcbd1b@sentry.io/1352235',
     environment: process.env.SENTRY_ENV || process.env.NODE_ENV,
-    shouldSendCallback: function (data) {
+    beforeSend: function (data) {
       const exception = data.exception;
       if (exception && exception.values && exception.values.length > 0) {
         const errorMessage = exception.values[0].value;
         if (errorMessage.match(/^BatchRequest error/)) {
           console.log('Blocked a BatchRequest error from Sentry');
-          return false;
+          return null;
         }
       }
-      return true;
+      return data;
     }
   });
 }
