@@ -168,38 +168,57 @@ Display your node's current status and earnings history
 ```
 aura status
 ```
+*Aurad-cli*
+
+The currently running version of the client
+
+*Latest Version*
+
+Latest version of the client available. If different than the currently running version, "Update Available" will be displayed. Update instructions can be found in this README
+
+*Cold Wallet*
+
+Ethereum address of the wallet holding AURA tokens for staking
 
 *Staked AURA*
 
-The current AURA balance you are staking to earn credits. If you are staking > 10,000 AURA it will reflect immediately as long as your 10k minimum has incubated for 7+ days. Note that any delays in updating your balance will be fixed at payout time based on the timestamp of the block in which you added the AURA.
+The current AURA balance you are staking to earn credits. If you are staking > 10,000 AURA it will reflect immediately as long as your 10k minimum has incubated for 7+ days.
+
+Notice: Any delays in updating your balance will be fixed at payout time based on the timestamp of the block in which you added the AURA.
 
 *Total Staking AURA*
 
 The current staked AURA balance across all active stakers (updated approximately once per minute)
 
+*Staking*
+
+Either “Online” or “Offline”, with the time the client last connected with IDEX
+
 *Current Period*
 
-The current active staking period. Payouts are made in ETH at the end of each period, based on your credits earned during that period.
+Date and times of the current staking period. Periods run for 14 days starting on Mon 00:00:00 UTC and ending on Sun 11:59:59 UTC. Payouts are made in ETH at the end of each period, based on your credits earned during that period.
 
-*My Period Credits*
+*My Period Credits/ Total Period Credits*
 
-Credits earned this period for this wallet address. 1 credit = 10k AURA staked for 5 minutes with your node online.
-
-*Total Period Credits*
-
-Total credits across all stakers during this period.
+The number of credits earned by the staker this period, over the total amount of credits earned by ALL stakers this period. 1 credit = 10k AURA staked for 5 minutes while your node is “online”.
 
 *Last Period Earnings*
 
-Your final earnings in ETH from last period. Note that payouts less than $3 USD based on ETH spot price at period close are rolled over to the next period.
+Amount of ETH earned by the staker during the last period. Note that payouts less than $3 USD based on ETH spot price at period close are rolled over to the next period.
+
+Notice: This will read “0.000000 ETH” immediately after a period has ended and will be updated once the period earnings are calculated and sent by IDEX. This happens with 48 hours of a period close.
 
 *Last Period Credits*
 
-Your final credits from the previous period, from which your payout was calculated.
+The number of credits earned last period, over the total amount of credits earned by ALL stakers last period. Staker payout is calculated from these numbers.
 
 *Earnings History*
 
-To view your complete earnings history, this URL returns a detailed CSV document.
+URL to view the earnings history of the staker in CSV format. This file can be opened by any text editor, Google Sheets, or Microsoft Excel.
+
+*Further Information*
+
+URL to view this documentation.
 
 #### Stopping AuraD
 
