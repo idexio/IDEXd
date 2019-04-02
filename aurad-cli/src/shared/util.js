@@ -3,11 +3,14 @@ const fs = require('fs');
 module.exports = class Util {
   static createBar(progress, length, message = '') {
     // Determine distance finished.
-    let distance = progress * length;
+    let distance = 0;
+    if (isNaN(progress) === false && isNaN(length) === false && progress > 0 && progress <= 1 && length > 0) {
+      distance = Math.floor(progress * length);
+    }
     // Start progress bar.
     let bar = "[";
     // Add main portion.
-    bar += "=".repeat(Math.floor(distance));
+    bar += "=".repeat(distance);
     // Add intermediate porttion.
     bar += distance % 1 > 0.5 ? "-" : "";
     // Extend empty bar.

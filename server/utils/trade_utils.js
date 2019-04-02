@@ -114,7 +114,7 @@ export async function filterByReceipts(txs) {
         if (!result) reject(new Error('receipt is null'));
         processed += 1;
         const tx = txsByHash[result.transactionHash];
-        if (result.status === true) {
+        if (result.status === true || result.status === '0x1' || result.status === 1) {
           Object.assign(tx, result);
           validTxs.push(txsByHash[result.transactionHash]);
         } else if (typeof result.status === 'undefined') {

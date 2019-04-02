@@ -127,7 +127,7 @@ npm install -g @auroradao/aurad-cli
 ```
 aura config
 ```
-AuraD provides prompts asking for a staking wallet that contains at least 10,000 AURA for 7 days. Go to [MyEtherWallet](https://www.myetherwallet.com/signmsg.html) or your preferred wallet software to sign the challenge and provide the `sig` value to prove that you control the wallet.
+AuraD provides prompts asking for a staking wallet that contains at least 10,000 AURA for 7 days. Go to [MyEtherWallet](https://www.myetherwallet.com/interface/sign-message) or your preferred wallet software to sign the challenge and provide the `sig` value to prove that you control the wallet.
 
 AuraD employs a cold-wallet design so that staked funds never need to leave the staking wallet for maximum security.
 
@@ -161,6 +161,64 @@ Logs are the best source of information to understand what's happening with Aura
 ```
 docker logs -f docker_aurad_1
 ```
+
+#### Checking your staking status
+
+Display your node's current status and earnings history
+```
+aura status
+```
+*Aurad-cli*
+
+The currently running version of the client
+
+*Latest Version*
+
+Latest version of the client available. If different than the currently running version, "Update Available" will be displayed. Update instructions can be found in this README
+
+*Cold Wallet*
+
+Ethereum address of the wallet holding AURA tokens for staking
+
+*Staked AURA*
+
+The current AURA balance you are staking to earn credits. If you are staking > 10,000 AURA it will reflect immediately as long as your 10k minimum has incubated for 7+ days.
+
+Notice: Any delays in updating your balance will be fixed at payout time based on the timestamp of the block in which you added the AURA.
+
+*Total Staking AURA*
+
+The current staked AURA balance across all active stakers (updated approximately once per minute)
+
+*Staking*
+
+Either “Online” or “Offline”, with the time the client last connected with IDEX
+
+*Current Period*
+
+Date and times of the current staking period. Periods run for 14 days starting on Mon 00:00:00 UTC and ending on Sun 11:59:59 UTC. Payouts are made in ETH at the end of each period, based on your credits earned during that period.
+
+*My Period Credits/ Total Period Credits*
+
+The number of credits earned by the staker this period, over the total amount of credits earned by ALL stakers this period. 1 credit = 10k AURA staked for 5 minutes while your node is “online”.
+
+*Last Period Earnings*
+
+Amount of ETH earned by the staker during the last period. Note that payouts less than $3 USD based on ETH spot price at period close are rolled over to the next period.
+
+Notice: This will read “0.000000 ETH” immediately after a period has ended and will be updated once the period earnings are calculated and sent by IDEX. This happens with 48 hours of a period close.
+
+*Last Period Credits*
+
+The number of credits earned last period, over the total amount of credits earned by ALL stakers last period. Staker payout is calculated from these numbers.
+
+*Earnings History*
+
+URL to view the earnings history of the staker in CSV format. This file can be opened by any text editor, Google Sheets, or Microsoft Excel.
+
+*Further Information*
+
+URL to view this documentation.
 
 #### Stopping AuraD
 

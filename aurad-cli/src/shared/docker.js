@@ -9,6 +9,7 @@ const homedir = require('os').homedir();
 const mkdirp = require('mkdirp');
 const Promise = require('bluebird');
 const url = require('url');
+const { STAKING_HOST } = require('../shared/config');
 
 module.exports = class Docker {
   constructor(rpcUrl) {
@@ -21,7 +22,7 @@ module.exports = class Docker {
     const RPC_PROTOCOL = rpc.protocol.slice(0,-1);
     const RPC_PORT = rpc.port || (RPC_PROTOCOL === 'http' ? '80' : (RPC_PROTOCOL === 'https' ? '443' : ''));
     
-    return `HOME=${homedir} RPC_HOST=${RPC_HOST} RPC_PROTOCOL=${RPC_PROTOCOL} RPC_PORT=${RPC_PORT}`;
+    return `HOME=${homedir} RPC_HOST=${RPC_HOST} RPC_PROTOCOL=${RPC_PROTOCOL} RPC_PORT=${RPC_PORT} STAKING_HOST=${STAKING_HOST}`;
   }
   
   rpcIsCustom() {

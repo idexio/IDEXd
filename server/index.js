@@ -15,10 +15,23 @@ import { web3, waitForRpc } from './helpers';
 import { IDEX_FIRST_BLOCK } from './constants';
 import * as Sentry from '@sentry/node';
 
-Sentry.init({
-  dsn: 'https://2c0043771883437e874c7a2e28fcbd1b@sentry.io/1352235',
-  environment: process.env.SENTRY_ENV || process.env.NODE_ENV,
-});
+if (process.env.DISABLE_SENTRY !== '1') {
+  Sentry.init({
+    dsn: 'https://2c0043771883437e874c7a2e28fcbd1b@sentry.io/1352235',
+    environment: process.env.SENTRY_ENV || process.env.NODE_ENV,
+    beforeSend: function (data) {
+      const exception = data.exception;
+      if (exception && exception.values && exception.values.length > 0) {
+        const errorMessage = exception.values[0].value;
+        if (errorMessage.match(/^BatchRequest error/)) {
+          console.log('Blocked a BatchRequest error from Sentry');
+          return null;
+        }
+      }
+      return data;
+    }
+  });
+}
 
 const fs = require('fs').promises;
 
@@ -153,11 +166,16 @@ const startKeepAlive = () => {
 };
 
 (async () => {
+  await db.waitFor();
   if (process.env.AUTO_MIGRATE === '1') {
-    await migrate();
+    try {
+      await migrate();
+    } catch(e) {
+      console.log('DB migration failed, exiting');
+      process.exit(1);
+    }
   }
   await loadWallet();
-  await db.waitFor();
   await waitForRpc();
   await buildServer();
   await api();
