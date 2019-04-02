@@ -4,6 +4,7 @@ import express from 'express';
 import http from 'http';
 import https from 'https';
 import compression from 'compression';
+import moment from 'moment';
 import request from 'request-promise';
 import config from './config';
 import Db from './db';
@@ -161,12 +162,18 @@ const statusApi = () => new Promise(resolve => {
   });
 });
 
+let keepAliveInterval;
+
 const startKeepAlive = () => {
-  keepalive() && setInterval(keepalive, 30000);
+  keepalive()
+  keepAliveInterval = setInterval(keepalive, 30000);
 };
 
 (async () => {
-  await db.waitFor();
+  if (!await db.waitFor(10)) {
+    console.log('Could not establish db connection, exiting');
+    return;
+  }
   if (process.env.AUTO_MIGRATE === '1') {
     try {
       await migrate();
@@ -185,32 +192,27 @@ const startKeepAlive = () => {
   runningWorker.on('ready', startKeepAlive);
 })();
 
-process.on('SIGINT', () => {
+const shutdown = async (cb) => {
+  db._closed = true;
+  if (keepAliveInterval) clearInterval(keepAliveInterval);
+  return new Promise.mapSeries([
+    server ? new Promise((resolve) => server.close(resolve)) : Promise.resolve(),
+    db.sequelize.close(),
+    worker.close(),
+    fs.unlink('ipc/status.json')
+  ]);
+}
+
+process.on('SIGINT', async () => {
   process.on('uncaughtException', () => {
     console.log('uncaughtException while shutting down');
   });
-
   console.log('SIGINT signal received.');
-  server.close(async () => {
-    console.log('HTTP server closed.');
-    try {
-      await db.sequelize.close;
-    } catch (e) {
-      console.log('warning: sequelize shutdown failed');
-    }
-    try {
-      await worker.close();
-    } catch (e) {
-      console.log('warning: worker shutdown failed');
-    }
-    try {
-      await fs.unlink('ipc/status.json');
-    } catch (e) {
-      console.log('warning: status.json deletion failed');
-    }
-    console.log('Process exiting.');
-    process.exit(0);
-  });
+  try {
+    await shutdown();
+  } finally {
+    process.exit(1);
+  }
 });
 
 module.exports = {
