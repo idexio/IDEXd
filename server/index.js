@@ -67,8 +67,12 @@ const buildServer = async () => {
 const routes = new Routes(app, db);
 app.use(compression());
 
+let keepaliveRunning = false;
 const keepalive = async () => {
+  if (keepaliveRunning) return;
+
   try {
+    keepaliveRunning = true;
     if (coldWallet) {
       const timestamp = Date.now();
 
@@ -111,6 +115,11 @@ const keepalive = async () => {
     console.log(`STAKING OFFLINE`);
     Sentry.captureException(e);
     console.log(e);
+  } finally {
+    // force keepalive to always be at least 5 seconds apart regardless of timeouts etc
+    setTimeout(() => {
+      keepaliveRunning = false;
+    }, 5000);
   }
 };
 
@@ -189,7 +198,9 @@ const startKeepAlive = () => {
   await statusApi();
 
   const runningWorker = await runner();
-  runningWorker.on('ready', startKeepAlive);
+  runningWorker.on('ready', () => {
+    startKeepAlive();
+  });
 })();
 
 const shutdown = async (cb) => {

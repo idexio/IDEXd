@@ -155,7 +155,7 @@ class Worker extends EventEmitter {
         printit(`Loaded snapshot ${snapshotsProcessed} of ${paths.length}(${(100 * snapshotsProcessed / paths.length).toFixed(2)}%)`);
       });
     } catch(e) {
-      console.log(e);
+      console.log(e && e.message);
     } finally {
       await this.writeStatus({ snapshotsCurrent: snapshotsProcessed });
       clearInterval(updater);
@@ -339,14 +339,7 @@ class Worker extends EventEmitter {
       // filter down to trades and process them
       try {
         transactions = this.filterTrades(transactions);
-        await new Promise(async (resolve, reject) => {
-          const timeout = setTimeout(() => {
-            reject('timeout')
-          }, 10000);
-          await this.processTransactions(transactions);
-          clearTimeout(timeout);
-          resolve();
-        });
+        await this.processTransactions(transactions);
         this.currentBlock = toBlock;
       } catch (e) {
         console.log('Error processing transactions, retry in 5 seconds');
