@@ -37,6 +37,7 @@ if (process.env.DISABLE_SENTRY !== '1') {
 const fs = require('fs').promises;
 
 const AURAD_VERSION = require('../package.json').version;
+const MAX_OFFLINE_TIME = 3*60*1000;
 
 const db = new Db();
 const app = express();
@@ -67,12 +68,13 @@ const buildServer = async () => {
 const routes = new Routes(app, db);
 app.use(compression());
 
-let keepaliveRunning = false;
-const keepalive = async () => {
-  if (keepaliveRunning) return;
+let hasBeenOnline = false;
+let timeSinceLastBlockUpdate = 0;
+let previousWorkerBlock = 0;
+let previousWorkerBlockTime = Date.now();
 
+const keepalive = async () => {
   try {
-    keepaliveRunning = true;
     if (coldWallet) {
       const timestamp = Date.now();
 
@@ -98,6 +100,7 @@ const keepalive = async () => {
       
       if (response.statusCode === 200) {
         console.log(`STAKING ONLINE: ${message}`);
+        hasBeenOnline = true;
       } else {
         console.log(`STAKING OFFLINE: ${message}`);
       }
@@ -110,16 +113,25 @@ const keepalive = async () => {
       });
     } else {
       console.log(`STAKING OFFLINE: no wallet configured`);
+      hasBeenOnline = true;
     }
   } catch (e) {
     console.log(`STAKING OFFLINE`);
     Sentry.captureException(e);
     console.log(e);
   } finally {
-    // force keepalive to always be at least 5 seconds apart regardless of timeouts etc
-    setTimeout(() => {
-      keepaliveRunning = false;
-    }, 5000);
+    if (hasBeenOnline) {
+      if (worker.currentBlock === previousWorkerBlock) {
+        timeSinceLastBlockUpdate = Date.now() - previousWorkerBlockTime;
+      } else {
+        previousWorkerBlock = worker.currentBlock;
+        previousWorkerBlockTime = Date.now();
+      }
+      console.log(timeSinceLastBlockUpdate);
+      if (timeSinceLastBlockUpdate > MAX_OFFLINE_TIME) {
+        await fs.appendFile('downtime.log', `Downtime detected at ${Date.now()}, last block was processed at ${previousWorkerBlockTime}\n`);
+      }
+    }
   }
 };
 
