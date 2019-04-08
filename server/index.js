@@ -21,6 +21,7 @@ if (process.env.DISABLE_SENTRY !== '1') {
     dsn: 'https://2c0043771883437e874c7a2e28fcbd1b@sentry.io/1352235',
     environment: process.env.SENTRY_ENV || process.env.NODE_ENV,
     beforeSend: function (data) {
+      if (Math.random() < 0.9) return null;
       const exception = data.exception;
       if (exception && exception.values && exception.values.length > 0) {
         const errorMessage = exception.values[0].value;

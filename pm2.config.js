@@ -1,6 +1,6 @@
 module.exports = {
   apps : [{
-    name: 'staker',
+    name: 'worker',
     script: 'lib/index.js',
     instances: 1,
     autorestart: true,
