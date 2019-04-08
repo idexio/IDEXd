@@ -1,4 +1,5 @@
 lib
+*.log
 cache/*
 /containers
 downloads/*

@@ -18,6 +18,8 @@ const db = new Db();
 
 const s3 = new AWS.S3();
 
+const BLOCK_DELAY = 6;
+
 async function listSnapshots() {
   const params = { Bucket: 'aura-snapshots-prod' };
   const snapshots = [];
@@ -153,7 +155,7 @@ class Worker extends EventEmitter {
         printit(`Loaded snapshot ${snapshotsProcessed} of ${paths.length}(${(100 * snapshotsProcessed / paths.length).toFixed(2)}%)`);
       });
     } catch(e) {
-      console.log(e);
+      console.log(e && e.message);
     } finally {
       await this.writeStatus({ snapshotsCurrent: snapshotsProcessed });
       clearInterval(updater);
@@ -171,25 +173,28 @@ class Worker extends EventEmitter {
 
   async getBlocksBatch(start, end) {
     return new Promise((resolve, reject) => {
+      const timeout = setTimeout(() => {
+        reject();
+      }, 10000);
       try {
         const blocks = [];
         let count = 0;
         let total = 0;
         const batch1 = new web3.BatchRequest();
-        const batch2 = new web3.BatchRequest();
         const cb = (err, block) => {
           if (err) reject(err);
           blocks.push(block);
           count += 1;
-          if (count === total) resolve(blocks);
+          if (count === total) {
+            clearTimeout(timeout);
+            resolve(blocks);
+          }
         };
         for (let n = start; n <= end; n += 1) {
-          if (n % 2 === 0) batch1.add(web3.eth.getBlock.request(n, true, cb));
-          if (n % 2 === 1) batch2.add(web3.eth.getBlock.request(n, true, cb));
+          batch1.add(web3.eth.getBlock.request(n, true, cb));
           total += 1;
         }
         batch1.execute();
-        batch2.execute();
       } catch (e) {
         reject(e);
       }
@@ -282,7 +287,7 @@ class Worker extends EventEmitter {
     await this.rpcSync();
 
     const { chunkSize } = this;
-    let maxBlock = await web3.eth.getBlockNumber();
+    let maxBlock = await web3.eth.getBlockNumber() - BLOCK_DELAY;
 
     let startBlock = 0; let didWarp = false;
     const skipTo = maxBlock - (maxBlock % SNAPSHOT_SIZE);
@@ -330,13 +335,13 @@ class Worker extends EventEmitter {
         await new Promise((resolve) => setTimeout(resolve, 5000));
         continue;
       }
+
       // filter down to trades and process them
       try {
         transactions = this.filterTrades(transactions);
         await this.processTransactions(transactions);
         this.currentBlock = toBlock;
       } catch (e) {
-        console.log(e);
         console.log('Error processing transactions, retry in 5 seconds');
         Sentry.captureException(e);
         await new Promise((resolve) => setTimeout(resolve, 5000));
@@ -353,7 +358,7 @@ class Worker extends EventEmitter {
         }
 
         try {
-          maxBlock = await web3.eth.getBlockNumber();
+          maxBlock = await web3.eth.getBlockNumber() - BLOCK_DELAY;
           toBlock = Math.min(maxBlock, startBlock + pollingChunkSize - 1);
           if (startBlock >= toBlock) {
             if (first === true) printit(`Waiting for new blocks @fter ${toBlock}`);
@@ -372,13 +377,7 @@ class Worker extends EventEmitter {
     transactions = transactions.filter(tx => tx.blockNumber > skipToBlock);
 
     if (isSnapshot === false) {
-      let temp = [];
-      while (transactions.length > 0) {
-        const toFilter = transactions.splice(0, 250);
-        const withReceipts = await filterByReceipts(toFilter);
-        temp = temp.concat(withReceipts);
-      }
-      transactions = temp;
+      transactions = await filterByReceipts(transactions);
     }
 
     if (process.env.MAKE_SNAPSHOTS === '1') {
@@ -397,7 +396,6 @@ class Worker extends EventEmitter {
       }
       stream.end();
     }
-
     const json = await Promise.all(transactions.map(async tx => tradeToJson(tx)));
     while (json.length > 0) {
       const records = json.splice(0, 100);

@@ -4,6 +4,7 @@ import express from 'express';
 import http from 'http';
 import https from 'https';
 import compression from 'compression';
+import moment from 'moment';
 import request from 'request-promise';
 import config from './config';
 import Db from './db';
@@ -20,6 +21,7 @@ if (process.env.DISABLE_SENTRY !== '1') {
     dsn: 'https://2c0043771883437e874c7a2e28fcbd1b@sentry.io/1352235',
     environment: process.env.SENTRY_ENV || process.env.NODE_ENV,
     beforeSend: function (data) {
+      if (Math.random() < 0.9) return null;
       const exception = data.exception;
       if (exception && exception.values && exception.values.length > 0) {
         const errorMessage = exception.values[0].value;
@@ -36,6 +38,7 @@ if (process.env.DISABLE_SENTRY !== '1') {
 const fs = require('fs').promises;
 
 const AURAD_VERSION = require('../package.json').version;
+const MAX_OFFLINE_TIME = 3*60*1000;
 
 const db = new Db();
 const app = express();
@@ -66,6 +69,11 @@ const buildServer = async () => {
 const routes = new Routes(app, db);
 app.use(compression());
 
+let hasBeenOnline = false;
+let timeSinceLastBlockUpdate = 0;
+let previousWorkerBlock = 0;
+let previousWorkerBlockTime = Date.now();
+
 const keepalive = async () => {
   try {
     if (coldWallet) {
@@ -93,6 +101,7 @@ const keepalive = async () => {
       
       if (response.statusCode === 200) {
         console.log(`STAKING ONLINE: ${message}`);
+        hasBeenOnline = true;
       } else {
         console.log(`STAKING OFFLINE: ${message}`);
       }
@@ -105,11 +114,25 @@ const keepalive = async () => {
       });
     } else {
       console.log(`STAKING OFFLINE: no wallet configured`);
+      hasBeenOnline = true;
     }
   } catch (e) {
     console.log(`STAKING OFFLINE`);
     Sentry.captureException(e);
     console.log(e);
+  } finally {
+    if (hasBeenOnline) {
+      if (worker.currentBlock === previousWorkerBlock) {
+        timeSinceLastBlockUpdate = Date.now() - previousWorkerBlockTime;
+      } else {
+        previousWorkerBlock = worker.currentBlock;
+        previousWorkerBlockTime = Date.now();
+      }
+      console.log(timeSinceLastBlockUpdate);
+      if (timeSinceLastBlockUpdate > MAX_OFFLINE_TIME) {
+        await fs.appendFile('downtime.log', `Downtime detected at ${Date.now()}, last block was processed at ${previousWorkerBlockTime}\n`);
+      }
+    }
   }
 };
 
@@ -161,12 +184,18 @@ const statusApi = () => new Promise(resolve => {
   });
 });
 
+let keepAliveInterval;
+
 const startKeepAlive = () => {
-  keepalive() && setInterval(keepalive, 30000);
+  keepalive()
+  keepAliveInterval = setInterval(keepalive, 30000);
 };
 
 (async () => {
-  await db.waitFor();
+  if (!await db.waitFor(10)) {
+    console.log('Could not establish db connection, exiting');
+    return;
+  }
   if (process.env.AUTO_MIGRATE === '1') {
     try {
       await migrate();
@@ -182,35 +211,32 @@ const startKeepAlive = () => {
   await statusApi();
 
   const runningWorker = await runner();
-  runningWorker.on('ready', startKeepAlive);
+  runningWorker.on('ready', () => {
+    startKeepAlive();
+  });
 })();
 
-process.on('SIGINT', () => {
+const shutdown = async (cb) => {
+  db._closed = true;
+  if (keepAliveInterval) clearInterval(keepAliveInterval);
+  return new Promise.mapSeries([
+    server ? new Promise((resolve) => server.close(resolve)) : Promise.resolve(),
+    db.sequelize.close(),
+    worker.close(),
+    fs.unlink('ipc/status.json')
+  ]);
+}
+
+process.on('SIGINT', async () => {
   process.on('uncaughtException', () => {
     console.log('uncaughtException while shutting down');
   });
-
   console.log('SIGINT signal received.');
-  server.close(async () => {
-    console.log('HTTP server closed.');
-    try {
-      await db.sequelize.close;
-    } catch (e) {
-      console.log('warning: sequelize shutdown failed');
-    }
-    try {
-      await worker.close();
-    } catch (e) {
-      console.log('warning: worker shutdown failed');
-    }
-    try {
-      await fs.unlink('ipc/status.json');
-    } catch (e) {
-      console.log('warning: status.json deletion failed');
-    }
-    console.log('Process exiting.');
-    process.exit(0);
-  });
+  try {
+    await shutdown();
+  } finally {
+    process.exit(1);
+  }
 });
 
 module.exports = {
