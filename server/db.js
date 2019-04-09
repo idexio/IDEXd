@@ -21,7 +21,7 @@ export default class Db {
     this.loadModels();
   }
 
-  async waitFor(delay = 10000) {
+  async waitFor(maxTries = 10, delay = 10000) {
     let success = false;
     do {
       try {
@@ -29,9 +29,13 @@ export default class Db {
         success = true;
       } catch (e) {
         console.log('db connection failed, retry');
-        await new Promise(resolve => setTimeout(resolve, delay));
+        if (this._closed !== true) {
+          await new Promise(resolve => setTimeout(resolve, delay));
+        }
       }
-    } while (success === false);
+      maxTries = maxTries - 1;
+    } while (success === false && this._closed !== true && maxTries > 0);
+    return(success);
   }
 
   loadModels() {

@@ -1,6 +1,7 @@
 import request from 'request-promise';
 import { web3 } from '../helpers';
 import { IDEX1_ADDRESS } from '../constants';
+import Promise from 'bluebird';
 
 const pairs = {};
 const tokensBySymbol = {};
@@ -101,36 +102,11 @@ export async function filterByReceipts(txs) {
   });
 
   if (txs.length === 0) return Promise.resolve(validTxs);
-  const txsByHash = {};
-  txs.forEach(tx => { (txsByHash[tx.hash] = tx); });
 
-  const count = txs.length;
-  let processed = 0;
-
-  return new Promise((resolve, reject) => {
-    const cb = (err, result) => {
-      if (err) reject(err);
-      else {
-        if (!result) reject(new Error('receipt is null'));
-        processed += 1;
-        const tx = txsByHash[result.transactionHash];
-        if (result.status === true || result.status === '0x1' || result.status === 1) {
-          Object.assign(tx, result);
-          validTxs.push(txsByHash[result.transactionHash]);
-        } else if (typeof result.status === 'undefined') {
-          if (result.gasUsed !== tx.gas) {
-            Object.assign(tx, result);
-            validTxs.push(txsByHash[result.transactionHash]);
-          }
-        }
-        if (processed === count) resolve(validTxs);
-      }
-    };
-
-    const batch = new web3.BatchRequest();
-    txs.map(tx => batch.add(web3.eth.getTransactionReceipt.request(tx.hash, cb)));
-    batch.execute();
-  });
+  return Promise.map(txs, async tx => {
+    const receipt = await web3.eth.getTransactionReceipt(tx.hash);
+    return Promise.resolve(receipt.status == true ? tx : null);
+  },{ concurrency: 4 }).filter(tx => tx !== null);
 }
 
 export async function tradeToJson(tx) {
