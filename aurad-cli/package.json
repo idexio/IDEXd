@@ -1,10 +1,10 @@
 {
-  "name": "@auroradao/aurad-cli",
+  "name": "@idexio/idexd-cli",
   "version": "0.1.4",
   "bin": {
-    "aura": "./bin/run"
+    "idex": "./bin/run"
   },
-  "bugs": "https://github.com/auroradao/aurad/issues",
+  "bugs": "https://github.com/idexio/idexd/issues",
   "dependencies": {
     "@oclif/command": "^1",
     "@oclif/config": "^1",
@@ -50,7 +50,7 @@
     "/oclif.manifest.json",
     "/src"
   ],
-  "homepage": "https://github.com/auroradao/aurad",
+  "homepage": "https://github.com/idexio/idexd",
   "keywords": [
     "oclif"
   ],
@@ -58,16 +58,16 @@
   "main": "src/index.js",
   "oclif": {
     "commands": "./src/commands",
-    "bin": "aura",
+    "bin": "idex",
     "plugins": [
       "@oclif/plugin-help"
     ],
     "macos": {
-      "identifier": "com.auroradao.aura.cli"
+      "identifier": "com.idexio.idex.cli"
     },
     "update": {
       "s3": {
-        "bucket": "aurad-cli-staging",
+        "bucket": "idexd-cli-staging",
         "templates": {
           "target": {
             "unversioned": "tarballs/<%- bin %>/<%- channel === 'stable' ? '' : 'channels/' + channel + '/' %><%- bin %>-<%- platform %>-<%- arch %><%- ext %>",
@@ -91,7 +91,7 @@
       }
     }
   },
-  "repository": "github:auroradao/aurad",
+  "repository": "github:idexio/idexd",
   "scripts": {
     "postpack": "rm -f oclif.manifest.json",
     "posttest": "eslint .",
