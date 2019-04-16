@@ -12,46 +12,46 @@ aura
 # Usage
 <!-- usage -->
 ```sh-session
-$ npm install -g @auroradao/aurad-cli
-$ aura COMMAND
+$ npm install -g @idexio/idexd-cli
+$ idex COMMAND
 running command...
-$ aura (-v|--version|version)
-@auroradao/aurad-cli/0.1.4 darwin-x64 node-v10.12.0
-$ aura --help [COMMAND]
+$ idex (-v|--version|version)
+@idexio/idexd-cli/0.1.4 darwin-x64 node-v11.14.0
+$ idex --help [COMMAND]
 USAGE
-  $ aura COMMAND
+  $ idex COMMAND
 ...
 ```
 <!-- usagestop -->
 # Commands
 <!-- commands -->
-* [`aura config`](#aura-config)
-* [`aura help [COMMAND]`](#aura-help-command)
-* [`aura logs`](#aura-logs)
-* [`aura restart`](#aura-restart)
-* [`aura start`](#aura-start)
-* [`aura status`](#aura-status)
-* [`aura stop`](#aura-stop)
-* [`aura up`](#aura-up)
+* [`idex config`](#idex-config)
+* [`idex help [COMMAND]`](#idex-help-command)
+* [`idex logs`](#idex-logs)
+* [`idex restart`](#idex-restart)
+* [`idex start`](#idex-start)
+* [`idex status`](#idex-status)
+* [`idex stop`](#idex-stop)
+* [`idex up`](#idex-up)
 
-## `aura config`
+## `idex config`
 
 Configure your staking wallet
 
 ```
 USAGE
-  $ aura config
+  $ idex config
 ```
 
-_See code: [src/commands/config.js](https://github.com/auroradao/aurad/blob/v0.1.4/src/commands/config.js)_
+_See code: [src/commands/config.js](https://github.com/idexio/idexd/blob/v0.1.4/src/commands/config.js)_
 
-## `aura help [COMMAND]`
+## `idex help [COMMAND]`
 
-display help for aura
+display help for idex
 
 ```
 USAGE
-  $ aura help [COMMAND]
+  $ idex help [COMMAND]
 
 ARGUMENTS
   COMMAND  command to show help for
@@ -62,78 +62,78 @@ OPTIONS
 
 _See code: [@oclif/plugin-help](https://github.com/oclif/plugin-help/blob/v2.1.4/src/commands/help.ts)_
 
-## `aura logs`
+## `idex logs`
 
 Print raw logs
 
 ```
 USAGE
-  $ aura logs
+  $ idex logs
 
 OPTIONS
   -n, --name=name  name of log to print (aura, parity or mysql)
 ```
 
-_See code: [src/commands/logs.js](https://github.com/auroradao/aurad/blob/v0.1.4/src/commands/logs.js)_
+_See code: [src/commands/logs.js](https://github.com/idexio/idexd/blob/v0.1.4/src/commands/logs.js)_
 
-## `aura restart`
+## `idex restart`
 
 Restart aura background services
 
 ```
 USAGE
-  $ aura restart
+  $ idex restart
 
 OPTIONS
   -r, --rpc=rpc  rpc server
 ```
 
-_See code: [src/commands/restart.js](https://github.com/auroradao/aurad/blob/v0.1.4/src/commands/restart.js)_
+_See code: [src/commands/restart.js](https://github.com/idexio/idexd/blob/v0.1.4/src/commands/restart.js)_
 
-## `aura start`
+## `idex start`
 
 Start the aura staking app
 
 ```
 USAGE
-  $ aura start
+  $ idex start
 
 OPTIONS
   -r, --rpc=rpc  rpc server
 ```
 
-_See code: [src/commands/start.js](https://github.com/auroradao/aurad/blob/v0.1.4/src/commands/start.js)_
+_See code: [src/commands/start.js](https://github.com/idexio/idexd/blob/v0.1.4/src/commands/start.js)_
 
-## `aura status`
+## `idex status`
 
 Check status for your staking node
 
 ```
 USAGE
-  $ aura status
+  $ idex status
 ```
 
-_See code: [src/commands/status.js](https://github.com/auroradao/aurad/blob/v0.1.4/src/commands/status.js)_
+_See code: [src/commands/status.js](https://github.com/idexio/idexd/blob/v0.1.4/src/commands/status.js)_
 
-## `aura stop`
+## `idex stop`
 
 Stop aura background services
 
 ```
 USAGE
-  $ aura stop
+  $ idex stop
 ```
 
-_See code: [src/commands/stop.js](https://github.com/auroradao/aurad/blob/v0.1.4/src/commands/stop.js)_
+_See code: [src/commands/stop.js](https://github.com/idexio/idexd/blob/v0.1.4/src/commands/stop.js)_
 
-## `aura up`
+## `idex up`
 
 Launch aura services in background
 
 ```
 USAGE
-  $ aura up
+  $ idex up
 ```
 
-_See code: [src/commands/up.js](https://github.com/auroradao/aurad/blob/v0.1.4/src/commands/up.js)_
+_See code: [src/commands/up.js](https://github.com/idexio/idexd/blob/v0.1.4/src/commands/up.js)_
 <!-- commandsstop -->
