@@ -9,12 +9,12 @@ const keepAliveHeaders = (web3, coldWallet, account, timestamp, json, challenge)
   const authorization = account.sign(payload);
 
   return {
-    'x-aurad-id': coldWallet,
-    'x-aurad-address': account.address,
-    'x-aurad-date': timestamp,
-    'x-aurad-digest': digest,
-    'x-aurad-authorization': authorization.signature,
-    'x-aurad-challenge': challenge,
+    'x-idexd-id': coldWallet,
+    'x-idexd-address': account.address,
+    'x-idexd-date': timestamp,
+    'x-idexd-digest': digest,
+    'x-idexd-authorization': authorization.signature,
+    'x-idexd-challenge': challenge,
   };
 };
 
@@ -23,20 +23,20 @@ const reportError = (msg) => {
 };
 
 const keepAliveVerify = async (web3, req, res, body) => {
-  const requiredHeaders = ['x-aurad-id', 'x-aurad-address', 'x-aurad-date', 'x-aurad-digest', 'x-aurad-authorization'];
+  const requiredHeaders = ['x-idexd-id', 'x-idexd-address', 'x-idexd-date', 'x-idexd-digest', 'x-idexd-authorization'];
   requiredHeaders.forEach(header => {
     if (!req.get(header)) reportError(`${header} is required`);
   });
 
-  const coldWallet = req.get('x-aurad-id');
+  const coldWallet = req.get('x-idexd-id');
   if (!web3.utils.isAddress(coldWallet)) reportError('invalid ethereum address');
 
-  const hotWallet = req.get('x-aurad-address');
+  const hotWallet = req.get('x-idexd-address');
   if (!web3.utils.isAddress(hotWallet)) reportError('invalid ethereum address');
 
-  const timestamp = req.get('x-aurad-date');
-  const digest = req.get('x-aurad-digest');
-  const signature = req.get('x-aurad-authorization');
+  const timestamp = req.get('x-idexd-date');
+  const digest = req.get('x-idexd-digest');
+  const signature = req.get('x-idexd-authorization');
 
   const payload = formPayload(timestamp, coldWallet, hotWallet, body);
   const expectedHash = crypto.createHash('sha256').update(payload).digest('hex');
