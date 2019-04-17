@@ -36,7 +36,7 @@ services:
         ports:
             - "127.0.0.1:33006:3306"
     aurad:
-        image: auroradao/aurad:0.1.4
+        image: idexio/idexd:0.1.4
         depends_on:
           - "mysql"
         volumes:
