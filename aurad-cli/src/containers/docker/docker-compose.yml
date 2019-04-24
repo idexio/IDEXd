@@ -2,7 +2,7 @@ version: '3.3'
             
 services:
     parity:
-        image: parity/parity:v2.3.9
+        image: parity/parity:v2.4.5
         env_file: aurad_config.env
         volumes:
             - parity:/eth
@@ -17,8 +17,6 @@ services:
           interval: 1m
           timeout: 10s
           retries: 3
-        labels:
-            - "autoheal"
         stop_signal: SIGINT
         stop_grace_period: 20s
         working_dir: /eth
@@ -29,23 +27,23 @@ services:
         env_file: aurad_config.env
         volumes:
             - type: bind
-              source: ${HOME}/.aurad/db
+              source: ${HOME}/.idexd/db
               target: /var/lib/mysql
         stop_signal: SIGINT
         stop_grace_period: 20s
         ports:
             - "127.0.0.1:33006:3306"
-    aurad:
-        image: idexio/idexd:0.1.4
+    idexd:
+        image: idexio/idexd:0.2.0
         depends_on:
           - "mysql"
         volumes:
           - type: bind
-            source: ${HOME}/.aurad/downloads
-            target: /usr/aurad/downloads
+            source: ${HOME}/.idexd/downloads
+            target: /usr/idexd/downloads
           - type: bind
-            source: ${HOME}/.aurad/ipc
-            target: /usr/aurad/ipc
+            source: ${HOME}/.idexd/ipc
+            target: /usr/idexd/ipc
         stop_signal: SIGINT
         stop_grace_period: 20s
         command: ["start", "pm2.config.js", "--no-daemon", "--only", "worker", "--kill-timeout", "5000"]
@@ -54,8 +52,6 @@ services:
           interval: 1m
           timeout: 10s
           retries: 3
-        labels:
-            - "autoheal"
         ports:
             - "8080:8080"
             - "8443:8443"
@@ -67,5 +63,8 @@ services:
           - STAKING_HOST
         links:
           - "mysql:db.local"
+    aurad:
+        image: auroradao/aurad:0.1.4
+        entrypoint: ["echo", "aurad is now idexd, exiting"]
 volumes:
   parity:

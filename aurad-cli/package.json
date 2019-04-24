@@ -1,6 +1,6 @@
 {
   "name": "@idexio/idexd-cli",
-  "version": "0.1.4",
+  "version": "0.2.0-beta.1",
   "bin": {
     "idex": "./bin/run"
   },
@@ -25,9 +25,10 @@
     "opn": "^5.4.0",
     "request": "^2.88.0",
     "request-promise": "^4.2.2",
+    "rimraf": "^2.6.3",
     "rxjs": "^6.3.3",
     "semver": "^5.6.0",
-    "web3": "^1.0.0-beta.41"
+    "web3": "1.0.0-beta.37"
   },
   "devDependencies": {
     "@oclif/dev-cli": "^1",

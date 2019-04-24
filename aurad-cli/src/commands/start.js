@@ -18,14 +18,13 @@ let parity = null;
 
 const start = new Listr([
     {
-        title: 'Starting AuraD',
+        title: 'Starting IDEXd',
         task: () => {
           return new Listr([
             {
                 title: 'Launching Local Services',
                 task: async () => {
                   await docker.up(['parity', 'mysql']);
-                  await docker.autoheal();
                 }
             }
         ]);
@@ -48,7 +47,7 @@ const start = new Listr([
     {
         title: 'Writing IDEX Trades',
         task: async () => {
-          await docker.up(['aurad']);
+          await docker.up(['idexd']);
           return new rxjs.Observable(observer => {
             let progress = 0;
             let timer = setInterval(async () => {
@@ -85,6 +84,10 @@ class StartCommand extends Command {
     const {flags} = this.parse(StartCommand)
     let rpc = flags.rpc || ''
     
+    // copy paste from Infura drops the protocol, which must be https
+    if (rpc.indexOf('mainnet.infura.io') === 0) {
+      rpc = 'https://' + rpc;
+    }
     parity = new Parity(rpc || 'http://localhost:8545');
     docker = new Docker(rpc || 'http://parity:8545');
     docker.requireDocker();
@@ -95,10 +98,10 @@ class StartCommand extends Command {
     }
     
     try {
-      const settings = fs.readFileSync(`${homedir}/.aurad/ipc/settings.json`);
+      const settings = fs.readFileSync(`${homedir}/.idexd/ipc/settings.json`);
       const json = JSON.parse(settings);
     } catch(e) {
-      console.log("Error loading wallet, please run 'aura config' first");
+      console.log("Error loading wallet, please run 'idex config' first");
       return;
     }
     
@@ -106,7 +109,7 @@ class StartCommand extends Command {
   }
 }
 
-StartCommand.description = `Start the aura staking app`
+StartCommand.description = `Start the idex staking app`
 
 StartCommand.flags = {
   rpc: flags.string({char: 'r', description: 'rpc server'}),

@@ -12,12 +12,12 @@ const padding = (str, f) => {
 }
 
 module.exports = {
-  WELCOME_MESSAGE: `AuraD v${version}`,
+  WELCOME_MESSAGE: `IDEXd v${version}`,
   WALLET_EXPLAINER: `
-    For AuraD staking, you need a wallet with a minimum of 10,000 AURA held for 7 days.
+    For IDEXd staking, you need a wallet with a minimum of 10,000 IDEX held for 7 days.
     We recommend using a cold wallet for security purposes.
     
-    Once we verify ownership of your cold wallet, AuraD will generate a local hot wallet for you.
+    Once we verify ownership of your cold wallet, IDEXd will generate a local hot wallet for you.
   `,
   WALLET_PROMPT: 'Cold wallet address'
 }
