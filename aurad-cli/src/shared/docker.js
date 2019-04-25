@@ -122,7 +122,7 @@ module.exports = class Docker {
     try {
       await exec(`${dcmd} stop autoheal`);
     } catch(e){
-      console.log(e);
+      // ok to fail -- only for systems still running autoheal
     }
     if (containers['aurad']) {
       console.log('Stopping AuraD');
