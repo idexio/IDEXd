@@ -16,7 +16,7 @@ $ npm install -g @idexio/idexd-cli
 $ idex COMMAND
 running command...
 $ idex (-v|--version|version)
-@idexio/idexd-cli/0.1.4 darwin-x64 node-v11.14.0
+@idexio/idexd-cli/0.2.0-beta.1 darwin-x64 node-v11.14.0
 $ idex --help [COMMAND]
 USAGE
   $ idex COMMAND
@@ -43,7 +43,7 @@ USAGE
   $ idex config
 ```
 
-_See code: [src/commands/config.js](https://github.com/idexio/idexd/blob/v0.1.4/src/commands/config.js)_
+_See code: [src/commands/config.js](https://github.com/idexio/idexd/blob/v0.2.0-beta.1/src/commands/config.js)_
 
 ## `idex help [COMMAND]`
 
@@ -71,10 +71,10 @@ USAGE
   $ idex logs
 
 OPTIONS
-  -n, --name=name  name of log to print (aura, parity or mysql)
+  -n, --name=name  name of log to print (idexd, parity or mysql)
 ```
 
-_See code: [src/commands/logs.js](https://github.com/idexio/idexd/blob/v0.1.4/src/commands/logs.js)_
+_See code: [src/commands/logs.js](https://github.com/idexio/idexd/blob/v0.2.0-beta.1/src/commands/logs.js)_
 
 ## `idex restart`
 
@@ -88,11 +88,11 @@ OPTIONS
   -r, --rpc=rpc  rpc server
 ```
 
-_See code: [src/commands/restart.js](https://github.com/idexio/idexd/blob/v0.1.4/src/commands/restart.js)_
+_See code: [src/commands/restart.js](https://github.com/idexio/idexd/blob/v0.2.0-beta.1/src/commands/restart.js)_
 
 ## `idex start`
 
-Start the aura staking app
+Start the idex staking app
 
 ```
 USAGE
@@ -102,7 +102,7 @@ OPTIONS
   -r, --rpc=rpc  rpc server
 ```
 
-_See code: [src/commands/start.js](https://github.com/idexio/idexd/blob/v0.1.4/src/commands/start.js)_
+_See code: [src/commands/start.js](https://github.com/idexio/idexd/blob/v0.2.0-beta.1/src/commands/start.js)_
 
 ## `idex status`
 
@@ -113,7 +113,7 @@ USAGE
   $ idex status
 ```
 
-_See code: [src/commands/status.js](https://github.com/idexio/idexd/blob/v0.1.4/src/commands/status.js)_
+_See code: [src/commands/status.js](https://github.com/idexio/idexd/blob/v0.2.0-beta.1/src/commands/status.js)_
 
 ## `idex stop`
 
@@ -124,7 +124,7 @@ USAGE
   $ idex stop
 ```
 
-_See code: [src/commands/stop.js](https://github.com/idexio/idexd/blob/v0.1.4/src/commands/stop.js)_
+_See code: [src/commands/stop.js](https://github.com/idexio/idexd/blob/v0.2.0-beta.1/src/commands/stop.js)_
 
 ## `idex up`
 
@@ -135,5 +135,5 @@ USAGE
   $ idex up
 ```
 
-_See code: [src/commands/up.js](https://github.com/idexio/idexd/blob/v0.1.4/src/commands/up.js)_
+_See code: [src/commands/up.js](https://github.com/idexio/idexd/blob/v0.2.0-beta.1/src/commands/up.js)_
 <!-- commandsstop -->
