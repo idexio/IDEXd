@@ -49,21 +49,21 @@ module.exports = class Docker {
   async migrateDirs() {
     if (fs.existsSync(`${homedir}/.aurad`)) {
       const runningContainers = await this.getRunningContainerIds();
-      if (runningContainers['aurad']) {
-        throw new Error('Cannot migrate .aurad data while containers are running');
+      if (runningContainers['aurad'] || runningContainers['mysql']) {
+        throw new Error('Cannot migrate .aurad data while containers are running. Please run `idex stop` first.');
       }
-    }
-    if (fs.existsSync(`${homedir}/.aurad/db`)) {
-      fs.renameSync(`${homedir}/.aurad/db`, `${homedir}/.idexd/db`);
-    }
-    if (fs.existsSync(`${homedir}/.aurad/ipc`)) {
-      fs.renameSync(`${homedir}/.aurad/ipc`, `${homedir}/.idexd/ipc`);
-    }
-    if (fs.existsSync(`${homedir}/.aurad/downloads`)) {
-      fs.renameSync(`${homedir}/.aurad/downloads`, `${homedir}/.idexd/ipc`);
-    }
-    if (fs.existsSync(`${homedir}/.aurad/downloads`)) {
-      rimraf(`${homedir}/.aurad`, () => {});
+      if (fs.existsSync(`${homedir}/.aurad/db`)) {
+        fs.renameSync(`${homedir}/.aurad/db`, `${homedir}/.idexd/db`);
+      }
+      if (fs.existsSync(`${homedir}/.aurad/ipc`)) {
+        fs.renameSync(`${homedir}/.aurad/ipc`, `${homedir}/.idexd/ipc`);
+      }
+      if (fs.existsSync(`${homedir}/.aurad/downloads`)) {
+        fs.renameSync(`${homedir}/.aurad/downloads`, `${homedir}/.idexd/downloads`);
+      }
+      if (fs.existsSync(`${homedir}/.aurad`)) {
+        rimraf.sync(`${homedir}/.aurad`, {}, () => {});
+      }
     }
   }
   

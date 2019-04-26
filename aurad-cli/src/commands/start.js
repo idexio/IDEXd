@@ -96,16 +96,21 @@ class StartCommand extends Command {
     if (rpc) {
       console.log('Using custom RPC = ' + rpc);
     }
-    
+ 
     try {
-      const settings = fs.readFileSync(`${homedir}/.idexd/ipc/settings.json`);
-      const json = JSON.parse(settings);
+      await docker.ensureDirs();  
+      try {
+        const settings = fs.readFileSync(`${homedir}/.idexd/ipc/settings.json`);
+        const json = JSON.parse(settings);
+      } catch(e) {
+        console.log("Error loading wallet, please run 'idex config' first");
+        return;
+      }  
+      await start.run();
     } catch(e) {
-      console.log("Error loading wallet, please run 'idex config' first");
+      console.log(e.message);
       return;
     }
-    
-    await start.run();
   }
 }
 
