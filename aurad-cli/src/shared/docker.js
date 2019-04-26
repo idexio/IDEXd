@@ -22,8 +22,9 @@ module.exports = class Docker {
     const RPC_HOST = `${rpc.hostname}${rpc.pathname}`;
     const RPC_PROTOCOL = rpc.protocol.slice(0,-1);
     const RPC_PORT = rpc.port || (RPC_PROTOCOL === 'http' ? '80' : (RPC_PROTOCOL === 'https' ? '443' : ''));
-    
-    return `HOME=${homedir} RPC_HOST=${RPC_HOST} RPC_PROTOCOL=${RPC_PROTOCOL} RPC_PORT=${RPC_PORT} STAKING_HOST=${STAKING_HOST}`;
+    const SSL_CERT_PATH = process.env.IS_STAGING === '1' ? 'ssl/staging/cert.pem' : 'ssl/production/cert.pem';
+    const SSL_PRIVATE_KEY_PATH = process.env.IS_STAGING === '1' ? 'ssl/staging/key.pem' : 'ssl/production/key.pem';
+    return `HOME=${homedir} SSL_CERT_PATH=${SSL_CERT_PATH} SSL_PRIVATE_KEY_PATH=${SSL_PRIVATE_KEY_PATH} RPC_HOST=${RPC_HOST} RPC_PROTOCOL=${RPC_PROTOCOL} RPC_PORT=${RPC_PORT} STAKING_HOST=${STAKING_HOST}`;
   }
   
   rpcIsCustom() {
