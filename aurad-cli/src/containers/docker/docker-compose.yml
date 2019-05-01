@@ -61,6 +61,8 @@ services:
           - RPC_PROTOCOL
           - RPC_PORT
           - STAKING_HOST
+          - SSL_PRIVATE_KEY_PATH
+          - SSL_CERT_PATH
         links:
           - "mysql:db.local"
     aurad:
