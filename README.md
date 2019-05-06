@@ -155,6 +155,11 @@ to display documentation on the `aurad-cli`'s capabilities.
 
 ### Common management tasks
 
+### Public endpoints
+
+To inspect the current total AURA staked, you may query the public endpoint:
+https://reporting.idex.market/aurad/staked
+
 #### Examining logs
 
 Logs are the best source of information to understand what's happening with AuraD under the hood. To follow the AuraD logs
