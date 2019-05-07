@@ -7,7 +7,7 @@ const Docker = require('../shared/docker');
 const package_json = require('../../package.json');
 const homedir = require('os').homedir();
 const semver = require('semver');
-const registryUri = 'https://registry.npmjs.org/@auroradao/aurad-cli';
+const registryUri = 'https://registry.npmjs.org/@idexio/idexd-cli';
 const { STAKING_HOST } = require('../shared/config');
 
 class StatusCommand extends Command {
