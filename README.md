@@ -1,8 +1,10 @@
 # IDEXd: IDEX Staking Tier 3 [beta]
 
+**Note: IDEXd is the [official successor](https://idex.market/staking) of AuraD and provides the same functionality and services based on the IDEX token. AuraD is no longer supported. Please [see below](#Upgrading-from-AuraD-to-IDEXd) for instructions on upgrading from AuraD to IDEXd.**
+
 ## Introduction
 
-IDEXd is software that enables the [IDEX](https://idex.market/) community to stake IDEX, serve parts of the IDEX production infrastructure, and earn fees for participation. IDEXd is the first part of a comprehensive plan to decentralize the centralized components of IDEX. For complete coverage, motivation, and roadmap, see our most recent post on [IDEX Staking](https://medium.com/aurora-dao/aura-staking-pos-earn-trade-fees-36319229ceae).
+IDEXd is software that enables the [IDEX](https://idex.market/) community to stake IDEX tokens, serve parts of the IDEX production infrastructure, and earn fees for participation. IDEXd is the first part of a comprehensive plan to decentralize the centralized components of IDEX. For complete coverage, motivation, and roadmap, see our most recent post on [IDEX Staking](https://medium.com/idex/aura-staking-pos-earn-trade-fees-36319229ceae).
 
 #### A note about versions
 
@@ -12,7 +14,7 @@ IDEXd is software that enables the [IDEX](https://idex.market/) community to sta
 
 ### Staking
 
-In order to be eligible to participate in IDEX Staking, you must have a wallet that holds a minimum of 10,000 IDEX for a minimum of 7 days. Dropping below a 10,000 AURA balance, even for a brief period, will reset the incubation period.
+In order to be eligible to participate in IDEX Staking, you must have a wallet that holds a minimum of 10,000 IDEX for a minimum of 7 days. Dropping below a 10,000 IDEX balance, even for a brief period, will reset the incubation period.
 
 ### Hardware / VPS
 
@@ -42,7 +44,7 @@ All of the requrements provide first-rate installation documentation, but we've 
 
 #### A note on users
 
-Some VPS providers, such as Digital Ocean, set up new Ubuntu 18.04 instances with only the `root` user account configured. We recommend running AuraD as a regular user account rather than `root`. When you first log in, run `whoami` to check which user you are currently acting as. If the response is `root`, follow Digital Ocean's [instructions](https://www.digitalocean.com/community/tutorials/how-to-add-and-delete-users-on-ubuntu-16-04) on adding a user and adding sudo privileges in order to run IDEXd.
+Some VPS providers, such as Digital Ocean, set up new Ubuntu 18.04 instances with only the `root` user account configured. We recommend running IDEXd as a regular user account rather than `root`. When you first log in, run `whoami` to check which user you are currently acting as. If the response is `root`, follow Digital Ocean's [instructions](https://www.digitalocean.com/community/tutorials/how-to-add-and-delete-users-on-ubuntu-16-04) on adding a user and adding sudo privileges in order to run IDEXd.
 
 Log out and log in to the new, non-`root` user account before proceeding.
 
@@ -141,7 +143,7 @@ TODO: documentation on forcing a full sync vs fast sync
 
 #### A note on connectivity
 
-In order to serve data to IDEX users, IDEXd Nodes must be reachable from the public internet. Most home and office connections are not publicly reachable by default, so you may need to take steps like opening up specific ports on your router. AuraD requires public TCP access to port 8443, and has limits on how frequently a node can change IP addresses.
+In order to serve data to IDEX users, IDEXd Nodes must be reachable from the public internet. Most home and office connections are not publicly reachable by default, so you may need to take steps like opening up specific ports on your router. IDEXd requires public TCP access to port 8443, and has limits on how frequently a node can change IP addresses.
 
 We recommend running IDEXd on an always-on, contected machine or a cloud-hosted compute instance.
 
@@ -241,6 +243,18 @@ $ npm install -g @idexio/idexd-cli
 $ idex start
 ```
 Occasionally an upgrade may require running `idex config` before it can start serving traffic.
+
+#### Upgrading from AuraD to IDEXd
+
+Before upgrading to IDEXd, swap AURA tokens for IDEX tokens using the [token swap tool](https://idex.market/aura-token-swap).
+
+To upgrade from AuraD to IDEXd, stop and uninstall AuraD then install and start IDEXd.
+```
+$ aura stop
+$ npm uninstall -g @auroradao/aurad-cli
+$ npm install -g @idexio/idexd-cli
+$ idex start
+```
 
 #### Running IDEXd with a custom RPC endpoint
 
