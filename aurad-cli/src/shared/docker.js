@@ -9,6 +9,7 @@ const homedir = require('os').homedir();
 const mkdirp = require('mkdirp');
 const Promise = require('bluebird');
 const url = require('url');
+const rimraf = require("rimraf");
 const { STAKING_HOST } = require('../shared/config');
 
 module.exports = class Docker {
@@ -21,8 +22,9 @@ module.exports = class Docker {
     const RPC_HOST = `${rpc.hostname}${rpc.pathname}`;
     const RPC_PROTOCOL = rpc.protocol.slice(0,-1);
     const RPC_PORT = rpc.port || (RPC_PROTOCOL === 'http' ? '80' : (RPC_PROTOCOL === 'https' ? '443' : ''));
-    
-    return `HOME=${homedir} RPC_HOST=${RPC_HOST} RPC_PROTOCOL=${RPC_PROTOCOL} RPC_PORT=${RPC_PORT} STAKING_HOST=${STAKING_HOST}`;
+    const SSL_CERT_PATH = process.env.IS_STAGING === '1' ? 'ssl/staging/cert.pem' : 'ssl/production/cert.pem';
+    const SSL_PRIVATE_KEY_PATH = process.env.IS_STAGING === '1' ? 'ssl/staging/key.pem' : 'ssl/production/key.pem';
+    return `HOME=${homedir} SSL_CERT_PATH=${SSL_CERT_PATH} SSL_PRIVATE_KEY_PATH=${SSL_PRIVATE_KEY_PATH} RPC_HOST=${RPC_HOST} RPC_PROTOCOL=${RPC_PROTOCOL} RPC_PORT=${RPC_PORT} STAKING_HOST=${STAKING_HOST}`;
   }
   
   rpcIsCustom() {
@@ -30,18 +32,39 @@ module.exports = class Docker {
   }
   
   async ensureDirs() {
-    await mkdirp(`${homedir}/.aurad`);
-    
+    await mkdirp(`${homedir}/.idexd`);
+    await this.migrateDirs();
     const dirs = [
-      `${homedir}/.aurad/db`,
-      `${homedir}/.aurad/ipc`,
-      `${homedir}/.aurad/downloads`
+      `${homedir}/.idexd/db`,
+      `${homedir}/.idexd/ipc`,
+      `${homedir}/.idexd/downloads`
     ];
     
     await Promise.map(dirs, dir => mkdirp(dir));
 
     if (process.getuid && process.getuid() === 0) {
-      console.warn('[WARNING] running `aura` as root is not recommended');
+      console.warn('[WARNING] running `idex` as root is not recommended');
+    }
+  }
+  
+  async migrateDirs() {
+    if (fs.existsSync(`${homedir}/.aurad`)) {
+      const runningContainers = await this.getRunningContainerIds();
+      if (runningContainers['aurad'] || runningContainers['mysql']) {
+        throw new Error('Cannot migrate .aurad data while containers are running. Please run `idex stop` first.');
+      }
+      if (fs.existsSync(`${homedir}/.aurad/db`)) {
+        fs.renameSync(`${homedir}/.aurad/db`, `${homedir}/.idexd/db`);
+      }
+      if (fs.existsSync(`${homedir}/.aurad/ipc`)) {
+        fs.renameSync(`${homedir}/.aurad/ipc`, `${homedir}/.idexd/ipc`);
+      }
+      if (fs.existsSync(`${homedir}/.aurad/downloads`)) {
+        fs.renameSync(`${homedir}/.aurad/downloads`, `${homedir}/.idexd/downloads`);
+      }
+      if (fs.existsSync(`${homedir}/.aurad`)) {
+        rimraf.sync(`${homedir}/.aurad`, {}, () => {});
+      }
     }
   }
   
@@ -66,7 +89,7 @@ module.exports = class Docker {
   }
   
   statusFile() {
-    return `${homedir}/.aurad/ipc/status.json`;
+    return `${homedir}/.idexd/ipc/status.json`;
   }
 
   async pull(services = []) {
@@ -74,13 +97,8 @@ module.exports = class Docker {
     let {stdout} = await exec(`${this.env()} ${cmd} -f ${this.composeFile()} pull ${services.join(' ')}`);
     return(stdout);
   }
-
-  async autoheal() {
-    let [cmd, version] = await this.hasDocker();
-    let {stdout} = await exec(`${cmd} run -d --name autoheal --restart=always -e AUTOHEAL_CONTAINER_LABEL=autoheal -v /var/run/docker.sock:/var/run/docker.sock willfarrell/autoheal || ${cmd} start autoheal`);
-  }
     
-  async up(services = ['parity', 'mysql', 'aurad']) {
+  async up(services = ['parity', 'mysql', 'idexd']) {
     this.ensureDirs();
     
     let [cmd, version] = await this.hasCompose();
@@ -105,13 +123,22 @@ module.exports = class Docker {
     try {
       await exec(`${dcmd} stop autoheal`);
     } catch(e){
-      console.log(e);
+      // ok to fail -- only for systems still running autoheal
     }
     if (containers['aurad']) {
       console.log('Stopping AuraD');
       try {
         await exec(`${dcmd} exec ${containers['aurad']} pm2 stop worker`);
         await exec(`${cmd} -f ${this.composeFile()} stop -t 20 aurad`);
+      } catch(e){
+        console.log(e);
+      }
+    }
+    if (containers['idexd']) {
+      console.log('Stopping IDEXd');
+      try {
+        await exec(`${dcmd} exec ${containers['idexd']} pm2 stop worker`);
+        await exec(`${cmd} -f ${this.composeFile()} stop -t 20 idexd`);
       } catch(e){
         console.log(e);
       }
@@ -138,6 +165,8 @@ module.exports = class Docker {
     ids['parity'] = result.stdout.toString().split('\n')[0]; 
     result = await exec (`${cmd} -f ${this.composeFile()} ps -q aurad`);
     ids['aurad'] = result.stdout.toString().split('\n')[0]; 
+    result = await exec (`${cmd} -f ${this.composeFile()} ps -q idexd`);
+    ids['idexd'] = result.stdout.toString().split('\n')[0]; 
     return(ids);
   }
   
@@ -149,7 +178,7 @@ module.exports = class Docker {
   
   async dbMigrate() {
     let [cmd, version] = await this.hasCompose();    
-    const {stdio} = await exec(`${cmd} -f ${this.composeFile()} run --entrypoint /usr/aurad/node_modules/.bin/sequelize aurad db:migrate`);
+    const {stdio} = await exec(`${cmd} -f ${this.composeFile()} run --entrypoint /usr/idexd/node_modules/.bin/sequelize idexd db:migrate`);
     return(stdio);
   }
   

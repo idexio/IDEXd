@@ -1,7 +1,7 @@
 {
-  "name": "aurad",
+  "name": "idexd",
   "version": "0.1.4",
-  "description": "Staking software for the AURA token",
+  "description": "Staking software for the IDEX token",
   "main": "lib/shared.js",
   "scripts": {
     "prepublish": "babel server -d lib",
@@ -13,10 +13,10 @@
     "integration-tests:watch": "NODE_ENV=test PORT=8888 DB_NAME=staking_coordinator_test mocha --watch --require @babel/register --require @babel/polyfill --recursive test/integration --timeout 10000"
   },
   "author": "",
-  "repository": "github:auroradao/aurad",
+  "repository": "github:idexio/idexd",
   "license": "LGPL-v3",
-  "homepage": "https://github.com/auroradao/aurad",
-  "bugs": "https://github.com/auroradao/aurad/issues",
+  "homepage": "https://github.com/idexio/idexd",
+  "bugs": "https://github.com/idexio/idexd/issues",
   "dependencies": {
     "@babel/polyfill": "^7.0.0",
     "@sentry/node": "^4.4.1",

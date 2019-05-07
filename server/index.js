@@ -128,7 +128,6 @@ const keepalive = async () => {
         previousWorkerBlock = worker.currentBlock;
         previousWorkerBlockTime = Date.now();
       }
-      console.log(timeSinceLastBlockUpdate);
       if (timeSinceLastBlockUpdate > MAX_OFFLINE_TIME) {
         await fs.appendFile('downtime.log', `Downtime detected at ${Date.now()}, last block was processed at ${previousWorkerBlockTime}\n`);
       }

@@ -17,14 +17,14 @@ class StatusCommand extends Command {
     let json;
     
     try {
-      const settings = fs.readFileSync(`${homedir}/.aurad/ipc/settings.json`);
+      const settings = fs.readFileSync(`${homedir}/.idexd/ipc/settings.json`);
       json = JSON.parse(settings);
     } catch(e) {
-      console.log("Error loading wallet, please run 'aura config' first");
+      console.log("Error loading wallet, please run 'idex config' first");
       return;
     }
 
-    console.log(`aurad-cli v${package_json.version}`);
+    console.log(`idexd-cli v${package_json.version}`);
 
     const packageInfo = await request({ uri: registryUri, json: true });
     const latestVersion = packageInfo['dist-tags'].latest;
@@ -40,8 +40,8 @@ class StatusCommand extends Command {
     const { balance, total, isQualified, dateAvailable } = await request({uri, json:true});
     
     const description = (isQualified === true) ? '' : ` (eligible for staking at ${dateAvailable})`;
-    console.log(`Staked AURA: ${Number(balance).toFixed(2)} AURA ${description}`);
-    console.log(`Total Staked AURA: ${Number(total).toFixed(2)} AURA`);
+    console.log(`Staked IDEX: ${Number(balance).toFixed(2)} IDEX ${description}`);
+    console.log(`Total Staked IDEX: ${Number(total).toFixed(2)} IDEX`);
 
     try {
       const { keepAlive } = await cliUtil.getAuradStatus(docker);

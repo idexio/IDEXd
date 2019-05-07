@@ -18,7 +18,6 @@ const { STAKING_HOST } = require('../shared/config');
 const parity = new Parity('http://offline');
 
 const docker = new Docker();
-docker.ensureDirs();
 
 async function getChallenge(address) {
   return new Promise((resolve, reject) => {
@@ -65,12 +64,17 @@ async function anykey(cli, message) {
 
 class ConfigCommand extends Command {
   async run() {
+    await docker.ensureDirs();
     const {flags} = this.parse(ConfigCommand);
     console.log(messages.WALLET_EXPLAINER);
  
     const containers = await docker.getRunningContainerIds();
+    if (containers['idexd']) {
+      console.log(`Error: idexd is running, please run 'idex stop' before updating your config`);
+      return;
+    }
     if (containers['aurad']) {
-      console.log(`Error: aurad is running, please run 'aura stop' before updating your config`);
+      console.log(`Error: an older version of aurad is running, please run 'idex stop' before updating your config`);
       return;
     }
    
@@ -93,7 +97,7 @@ class ConfigCommand extends Command {
     
     let balanceFormatted = (new BigNumber(balance)).dividedBy(new BigNumber('1000000000000000000')).toString();
     
-    console.log(`\n    Your staked ${chalk.cyan('AURA')} balance is ${balanceFormatted}.`);
+    console.log(`\n    Your staked ${chalk.cyan('IDEX')} balance is ${balanceFormatted}.`);
     console.log(`    Use https://www.myetherwallet.com/interface/sign-message or your preferred wallet software to sign this *exact* message:\n    ${chalk.blue.bgWhite(challenge)}${chalk.white.bgBlack('  ')}\n`);
 
     let signature = await cli.prompt('    "sig" value', {type: 'mask'});
@@ -129,8 +133,8 @@ class ConfigCommand extends Command {
         hotWallet: keystore,
       };
   
-      fs.writeFileSync(`${homedir}/.aurad/ipc/settings.json`, JSON.stringify(settings));        
-      console.log('\n    Staking wallet confirmed. Run \'aura start\' to download IDEX trade history and begin staking.\n');
+      fs.writeFileSync(`${homedir}/.idexd/ipc/settings.json`, JSON.stringify(settings));        
+      console.log('\n    Staking wallet confirmed. Run \'idex start\' to download IDEX trade history and begin staking.\n');
     } catch(e) {
       console.log('\n    Error submitting cold wallet challenge');
     }
