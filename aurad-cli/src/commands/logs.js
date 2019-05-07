@@ -6,12 +6,12 @@ const docker = new Docker();
 class LogsCommand extends Command {
   async run() {
     const {flags} = this.parse(LogsCommand)
-    let name = flags.name || 'aurad'
-    if (name == 'aura') name = 'aurad';
+    let name = flags.name || 'idexd'
+    if (name == 'idex') name = 'idexd';
     name = name.toLowerCase();
     
-    if (['aurad', 'mysql', 'parity'].indexOf(name) === -1) {
-      console.log(`Invalid log name, choose one of 'aurad' (default), 'mysql' or 'parity'`);
+    if (['idexd', 'mysql', 'parity'].indexOf(name) === -1) {
+      console.log(`Invalid log name, choose one of 'idexd' (default), 'mysql' or 'parity'`);
       return;
     }
     
@@ -34,7 +34,7 @@ class LogsCommand extends Command {
 LogsCommand.description = `Print raw logs`
 
 LogsCommand.flags = {
-  name: flags.string({char: 'n', description: 'name of log to print (aura, parity or mysql)'})
+  name: flags.string({char: 'n', description: 'name of log to print (idexd, parity or mysql)'})
 }
 
 module.exports = LogsCommand

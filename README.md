@@ -1,22 +1,24 @@
-# AuraD: IDEX Staking Tier 3 [beta]
+# IDEXd: IDEX Staking Tier 3 [beta]
+
+**Note: IDEXd is the [official successor](https://idex.market/staking) of AuraD and provides the same functionality and services based on the IDEX token. AuraD is no longer supported. Please [see below](#Upgrading-from-AuraD-to-IDEXd) for instructions on upgrading from AuraD to IDEXd.**
 
 ## Introduction
 
-AuraD is software that enables the [IDEX](https://idex.market/) community to stake AURA, serve parts of the IDEX production infrastructure, and earn fees for participation. AuraD is the first part of a comprehensive plan to decentralize the centralized components of IDEX. For complete coverage, motivation, and roadmap, see our most recent post on [AURA Staking](https://medium.com/aurora-dao/aura-staking-pos-earn-trade-fees-36319229ceae).
+IDEXd is software that enables the [IDEX](https://idex.market/) community to stake IDEX tokens, serve parts of the IDEX production infrastructure, and earn fees for participation. IDEXd is the first part of a comprehensive plan to decentralize the centralized components of IDEX. For complete coverage, motivation, and roadmap, see our most recent post on [IDEX Staking](https://medium.com/idex/aura-staking-pos-earn-trade-fees-36319229ceae).
 
 #### A note about versions
 
-**AuraD is currently beta software.** It is under development and subject to frequent changes, upgrades, and bug fixes. We appreciate your help in providing feedback and working around rough edges as we build towards 1.0.
+**IDEXd is currently beta software.** It is under development and subject to frequent changes, upgrades, and bug fixes. We appreciate your help in providing feedback and working around rough edges as we build towards 1.0.
 
 ## Requirements
 
 ### Staking
 
-In order to be eligible to participate in Aura Staking, you must have a wallet that holds a minimum of 10,000 AURA for a minimum of 7 days. Dropping below a 10,000 AURA balance, even for a brief period, will reset the incubation period.
+In order to be eligible to participate in IDEX Staking, you must have a wallet that holds a minimum of 10,000 IDEX for a minimum of 7 days. Dropping below a 10,000 IDEX balance, even for a brief period, will reset the incubation period.
 
 ### Hardware / VPS
 
-AuraD is designed to run on a computer or VPS that is continually connected to the internet with a stable IP address and inbound connectivity.
+IDEXd is designed to run on a computer or VPS that is continually connected to the internet with a stable IP address and inbound connectivity.
 
 * 2GB+ memory
 * 20GB+ storage
@@ -30,11 +32,11 @@ AuraD is designed to run on a computer or VPS that is continually connected to t
 * Node.js 10.15.0, npm 6.4.1 ([Installation Guide](https://github.com/creationix/nvm#usage))
 * Git 17.1 ([Installation Guide](https://git-scm.com/downloads))
 
-AuraD is designed to support a wide range of systems, but for the beta we recommend sticking to these requirements and versions.
+IDEXd is designed to support a wide range of systems, but for the beta we recommend sticking to these requirements and versions.
 
-## Getting AuraD
+## Getting IDEXd
 
-AuraD is distrbuted via the @auroradao/aurad-cli npm package with dependencies on Docker and Docker Compose.
+IDEXd is distrbuted via the @idexio/idexd-cli npm package with dependencies on Docker and Docker Compose.
 
 ## Getting Started
 
@@ -42,7 +44,7 @@ All of the requrements provide first-rate installation documentation, but we've 
 
 #### A note on users
 
-Some VPS providers, such as Digital Ocean, set up new Ubuntu 18.04 instances with only the `root` user account configured. We recommend running AuraD as a regular user account rather than `root`. When you first log in, run `whoami` to check which user you are currently acting as. If the response is `root`, follow Digital Ocean's [instructions](https://www.digitalocean.com/community/tutorials/how-to-add-and-delete-users-on-ubuntu-16-04) on adding a user and adding sudo privileges in order to run AuraD.
+Some VPS providers, such as Digital Ocean, set up new Ubuntu 18.04 instances with only the `root` user account configured. We recommend running IDEXd as a regular user account rather than `root`. When you first log in, run `whoami` to check which user you are currently acting as. If the response is `root`, follow Digital Ocean's [instructions](https://www.digitalocean.com/community/tutorials/how-to-add-and-delete-users-on-ubuntu-16-04) on adding a user and adding sudo privileges in order to run IDEXd.
 
 Log out and log in to the new, non-`root` user account before proceeding.
 
@@ -116,42 +118,42 @@ curl -o- https://raw.githubusercontent.com/creationix/nvm/v0.33.11/install.sh | 
 nvm install 10.15
 ```
 
-### Install and launch AuraD
+### Install and launch IDEXd
 
-1. Install `aurad-cli` to start and manage AuraD
+1. Install `idexd-cli` to start and manage IDEXd
 ```
-npm install -g @auroradao/aurad-cli
+npm install -g @idexio/idexd-cli
 ```
 
 2. Configure a staking wallet
 ```
-aura config
+idex config
 ```
-AuraD provides prompts asking for a staking wallet that contains at least 10,000 AURA for 7 days. Go to [MyEtherWallet](https://www.myetherwallet.com/interface/sign-message) or your preferred wallet software to sign the challenge and provide the `sig` value to prove that you control the wallet.
+IDEXd provides prompts asking for a staking wallet that contains at least 10,000 IDEX for 7 days. Go to [MyEtherWallet](https://www.myetherwallet.com/interface/sign-message) or your preferred wallet software to sign the challenge and provide the `sig` value to prove that you control the wallet.
 
-AuraD employs a cold-wallet design so that staked funds never need to leave the staking wallet for maximum security.
+IDEXd employs a cold-wallet design so that staked funds never need to leave the staking wallet for maximum security.
 
-3. Sync your Aura Node and start serving traffic
+3. Sync your IDEX Node and start serving traffic
 ```
-aura start
+idex start
 ```
-AuraD connects to the Ethereum network and downloads IDEX trade history data to serve to IDEX users. Depending on the resources of the underlying computer or VPS and network, the initial syncing process may take a few minutes to several hours.
+IDEXd connects to the Ethereum network and downloads IDEX trade history data to serve to IDEX users. Depending on the resources of the underlying computer or VPS and network, the initial syncing process may take a few minutes to several hours.
 
 TODO: documentation on forcing a full sync vs fast sync
 
 #### A note on connectivity
 
-In order to serve data to IDEX users, AuraD Nodes must be reachable from the public internet. Most home and office connections are not publicly reachable by default, so you may need to take steps like opening up specific ports on your router. AuraD requires public TCP access to port 8443, and has limits on how frequently a node can change IP addresses.
+In order to serve data to IDEX users, IDEXd Nodes must be reachable from the public internet. Most home and office connections are not publicly reachable by default, so you may need to take steps like opening up specific ports on your router. IDEXd requires public TCP access to port 8443, and has limits on how frequently a node can change IP addresses.
 
-We recommend running AuraD on an always-on, contected machine or a cloud-hosted compute instance.
+We recommend running IDEXd on an always-on, contected machine or a cloud-hosted compute instance.
 
-## Managing AuraD
+## Managing IDEXd
 
-AuraD is design to require minimal maintenance once it is live. For details on managing AuraD
+IDEXd is design to require minimal maintenance once it is live. For details on managing IDEXd
 ```
-aura
+idex
 ```
-to display documentation on the `aurad-cli`'s capabilities.
+to display documentation on the `idexd-cli`'s capabilities.
 
 ### Common management tasks
 
@@ -162,18 +164,18 @@ https://reporting.idex.market/aurad/staked
 
 #### Examining logs
 
-Logs are the best source of information to understand what's happening with AuraD under the hood. To follow the AuraD logs
+Logs are the best source of information to understand what's happening with IDEXd under the hood. To follow the IDEXd logs
 ```
-docker logs -f docker_aurad_1
+docker logs -f docker_idexd_1
 ```
 
 #### Checking your staking status
 
 Display your node's current status and earnings history
 ```
-aura status
+idex status
 ```
-*Aurad-cli*
+*idexd-cli*
 
 The currently running version of the client
 
@@ -183,17 +185,17 @@ Latest version of the client available. If different than the currently running 
 
 *Cold Wallet*
 
-Ethereum address of the wallet holding AURA tokens for staking
+Ethereum address of the wallet holding IDEX tokens for staking
 
-*Staked AURA*
+*Staked IDEX*
 
-The current AURA balance you are staking to earn credits. If you are staking > 10,000 AURA it will reflect immediately as long as your 10k minimum has incubated for 7+ days.
+The current IDEX balance you are staking to earn credits. If you are staking > 10,000 IDEX it will reflect immediately as long as your 10k minimum has incubated for 7+ days.
 
-Notice: Any delays in updating your balance will be fixed at payout time based on the timestamp of the block in which you added the AURA.
+Notice: Any delays in updating your balance will be fixed at payout time based on the timestamp of the block in which you added the IDEX.
 
-*Total Staking AURA*
+*Total Staking IDEX*
 
-The current staked AURA balance across all active stakers (updated approximately once per minute)
+The current staked IDEX balance across all active stakers (updated approximately once per minute)
 
 *Staking*
 
@@ -205,7 +207,7 @@ Date and times of the current staking period. Periods run for 14 days starting o
 
 *My Period Credits/ Total Period Credits*
 
-The number of credits earned by the staker this period, over the total amount of credits earned by ALL stakers this period. 1 credit = 10k AURA staked for 5 minutes while your node is “online”.
+The number of credits earned by the staker this period, over the total amount of credits earned by ALL stakers this period. 1 credit = 10k IDEX staked for 5 minutes while your node is “online”.
 
 *Last Period Earnings*
 
@@ -225,41 +227,53 @@ URL to view the earnings history of the staker in CSV format. This file can be o
 
 URL to view this documentation.
 
-#### Stopping AuraD
+#### Stopping IDEXd
 
 ```
-aura stop
+idex stop
 ```
 
-#### Restarting AuraD
+#### Restarting IDEXd
 
 ```
-aura restart
+idex restart
 ```
 
-#### Upgrading AuraD
+#### Upgrading IDEXd
 
-To upgrade AuraD, stop the service, upgrade `@auroradao/aurad-cli`, and restart the service.
+To upgrade IDEXd, stop the service, upgrade `@idexio/idexd-cli`, and restart the service.
+```
+$ idex stop
+$ npm install -g @idexio/idexd-cli
+$ idex start
+```
+Occasionally an upgrade may require running `idex config` before it can start serving traffic.
+
+#### Upgrading from AuraD to IDEXd
+
+Before upgrading to IDEXd, swap AURA tokens for IDEX tokens using the [token swap tool](https://idex.market/aura-token-swap).
+
+To upgrade from AuraD to IDEXd, stop and uninstall AuraD then install and start IDEXd.
 ```
 $ aura stop
-$ npm install -g @auroradao/aurad-cli
-$ aura start
+$ npm uninstall -g @auroradao/aurad-cli
+$ npm install -g @idexio/idexd-cli
+$ idex start
 ```
-Occasionally an upgrade may require running `aura config` before it can start serving traffic.
 
-#### Running AuraD with a custom RPC endpoint
+#### Running IDEXd with a custom RPC endpoint
 
-AuraD ships with its own copy of the [Parity Ethereum Client](https://www.parity.io/ethereum/) and uses Parity to load data from the Ethereum blockchain. To use a different Etheruem node, you can specify a custom RPC endpoint
+IDEXd ships with its own copy of the [Parity Ethereum Client](https://www.parity.io/ethereum/) and uses Parity to load data from the Ethereum blockchain. To use a different Etheruem node, you can specify a custom RPC endpoint
 ```
-aura start --rpc <RPC endpoint URL including port>
+idex start --rpc <RPC endpoint URL including port>
 ```
 
 ## Getting Help and Reporting Issues
 
 For questions about getting started and help if you're stuck, please [reach out to our team on Discord](https://discord.gg/tQa9CAB). 
 
-If you believe you have identified a bug in AuraD, please [file an issue](https://github.com/auroradao/aurad/issues).
+If you believe you have identified a bug in IDEXd, please [file an issue](https://github.com/idexio/idexd/issues).
 
 ## License
 
-AuraD is licensed under the [GNU Lesser General Public License v3.0](https://www.gnu.org/licenses/lgpl-3.0.en.html).
+IDEXd is licensed under the [GNU Lesser General Public License v3.0](https://www.gnu.org/licenses/lgpl-3.0.en.html).
