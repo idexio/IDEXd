@@ -2,7 +2,7 @@ version: '3.3'
             
 services:
     parity:
-        image: parity/parity:v2.4.5
+        image: parity/parity:stable
         env_file: aurad_config.env
         volumes:
             - parity:/eth
