@@ -4,6 +4,7 @@ import request from 'request-promise';
 import fsWithCallbacks from 'fs';
 import writeFileAtomic from 'write-file-atomic';
 import AWS from 'aws-sdk';
+import zlib from 'zlib';
 import { getTokenMap, initTokens, tradeToJson, filterByReceipts } from './utils/trade_utils';
 import Db from './db';
 import Lock from './lock';
@@ -372,6 +373,54 @@ class Worker extends EventEmitter {
       } while (startBlock >= toBlock);
     }
   }
+  
+  async function uploadOneSnapshot(localFileName) {
+    const path = `./snapshots/${localFileName}`;
+    return s3.putObject(
+      {
+        ACL: 'public-read',
+        Body: zlib.gzipSync(fsWithCallbacks.readFileSync(path)),
+        Bucket: 'aura-snapshots-prod',
+        Key: localFileName,
+        ContentType: 'application/json',
+        ContentEncoding: 'gzip',
+      }
+    );  
+  }
+  
+  // compare the S3 bucket and our local directory
+  // upload anything except for the most recent local snapshot which may not be complete
+  async function checkForSnapshotUpload() {
+    console.log('Checking for local snapshots to upload');
+    const allS3Snapshots = await listSnapshots();
+    const snapshotLookup = {};
+    for (let s3Key of allS3Snapshots) {
+      snapshotLookup[s3Key] = true;
+    }
+    const allLocalSnapshots = fs.readdirSync('./snapshots');
+      .sort((f1, f2) => {
+        const v1 = parseInt(f1.split('_')[0]);
+        const v2 = parseInt(f2.split('_')[0]);
+        if (v1 < v2) return -1;
+        if (v1 > v2) return 1;
+        return 0;
+      })
+      .slice(0, -1);
+    for (let localFileName of allLocalSnapshots) {
+      if (snapshotLookup[localFileName] != true) {
+        console.log(`${localFileName} is ready to upload`);
+        const result = await uploadOneSnapshot(localFileName);
+      }
+    }
+    console.log('Done uploading snapshots');
+  }
+  
+  function snapshotFileFromBlockNumber(n) {
+    const startBlock = n - n % 1000;
+    const endBlock = startBlock + 999;
+
+    return `${startBlock}_${endBlock}`;
+  }
 
   async processTransactions(transactions, skipToBlock = 0, isSnapshot = false) {
     transactions = transactions.filter(tx => tx.blockNumber > skipToBlock);
@@ -380,8 +429,9 @@ class Worker extends EventEmitter {
       transactions = await filterByReceipts(transactions);
     }
 
-    if (process.env.MAKE_SNAPSHOTS === '1') {
-      const stream = fsWithCallbacks.createWriteStream('snapshots.out', { flags: 'a' });
+    if (process.env.MAKE_SNAPSHOTS === '1' && transactions.length) {
+      const filename = snapshotFileFromBlockNumber(transactions[0].blockNumber);
+      const stream = fsWithCallbacks.createWriteStream(filename, { flags: 'a' });
       for (const tx of transactions) {
         await new Promise((resolve, reject) => {
           stream.write(
