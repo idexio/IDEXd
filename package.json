@@ -1,6 +1,6 @@
 {
   "name": "idexd",
-  "version": "0.1.4",
+  "version": "0.2.1",
   "description": "Staking software for the IDEX token",
   "main": "lib/shared.js",
   "scripts": {

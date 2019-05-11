@@ -21,8 +21,11 @@ const s3 = new AWS.S3();
 
 const BLOCK_DELAY = 6;
 
-async function listSnapshots() {
-  const params = { Bucket: 'aura-snapshots-prod' };
+async function listSnapshots(StartAfter = '0000000_0000000') {
+  const params = {
+    Bucket: 'aura-snapshots-prod',
+    StartAfter,
+  };
   const snapshots = [];
   let response = null;
   do {
@@ -283,7 +286,7 @@ class Worker extends EventEmitter {
 
   async getTransactions() {
     this._running = true;
-
+    
     await this.resetStatus();
     await this.rpcSync();
 
@@ -310,7 +313,16 @@ class Worker extends EventEmitter {
     else printit(`Resumed sync at block ${startBlock}\n`);
 
     await this.writeStatus({ polling: true });
-        
+    
+    if (process.env.MAKE_SNAPSHOTS === '1') {
+      setInterval(async () => {
+        try {
+          await this.checkForSnapshotUpload();
+        } catch(e) {
+          console.log(e);
+        }
+      }, 60000);
+    }
     while (true) {
       if (Worker._closed === true) {
         Worker._done = true;
@@ -373,31 +385,44 @@ class Worker extends EventEmitter {
       } while (startBlock >= toBlock);
     }
   }
-  
-  async function uploadOneSnapshot(localFileName) {
+
+  uploadOneSnapshot(localFileName) {
     const path = `./snapshots/${localFileName}`;
-    return s3.putObject(
-      {
+    let fileContents = String(fsWithCallbacks.readFileSync(path, 'utf8'));
+    if (fileContents == '') {
+      fileContents = '[]';
+    } else {
+      fileContents = `[${fileContents.trim().slice(0,-1)}]`;
+    }
+    const sanity = JSON.parse(fileContents);
+    const Body = zlib.gzipSync(fileContents);
+    return new Promise((resolve, reject) => {
+      s3.putObject({
         ACL: 'public-read',
-        Body: zlib.gzipSync(fsWithCallbacks.readFileSync(path)),
+        Body,
         Bucket: 'aura-snapshots-prod',
         Key: localFileName,
         ContentType: 'application/json',
         ContentEncoding: 'gzip',
-      }
-    );  
+      }, (err, result) => {
+        if (err) reject(err);
+        else resolve(result);
+      });
+    }); 
   }
   
   // compare the S3 bucket and our local directory
   // upload anything except for the most recent local snapshot which may not be complete
-  async function checkForSnapshotUpload() {
-    console.log('Checking for local snapshots to upload');
-    const allS3Snapshots = await listSnapshots();
+  async checkForSnapshotUpload() {
+    const allS3Snapshots = await listSnapshots('7000000_7000000');
     const snapshotLookup = {};
     for (let s3Key of allS3Snapshots) {
+      if (s3Key[0] === '/') s3Key = s3Key.slice(1);
       snapshotLookup[s3Key] = true;
     }
-    const allLocalSnapshots = fs.readdirSync('./snapshots');
+    let allLocalSnapshots = fsWithCallbacks.readdirSync('./snapshots');
+    allLocalSnapshots = allLocalSnapshots
+      .filter(f => f.match(/^[0-9]+_[0-9]+$/))
       .sort((f1, f2) => {
         const v1 = parseInt(f1.split('_')[0]);
         const v2 = parseInt(f2.split('_')[0]);
@@ -406,16 +431,16 @@ class Worker extends EventEmitter {
         return 0;
       })
       .slice(0, -1);
+
     for (let localFileName of allLocalSnapshots) {
       if (snapshotLookup[localFileName] != true) {
         console.log(`${localFileName} is ready to upload`);
-        const result = await uploadOneSnapshot(localFileName);
+        const result = await this.uploadOneSnapshot(localFileName);
       }
     }
-    console.log('Done uploading snapshots');
   }
   
-  function snapshotFileFromBlockNumber(n) {
+  snapshotFileFromBlockNumber(n) {
     const startBlock = n - n % 1000;
     const endBlock = startBlock + 999;
 
@@ -429,13 +454,13 @@ class Worker extends EventEmitter {
       transactions = await filterByReceipts(transactions);
     }
 
-    if (process.env.MAKE_SNAPSHOTS === '1' && transactions.length) {
-      const filename = snapshotFileFromBlockNumber(transactions[0].blockNumber);
-      const stream = fsWithCallbacks.createWriteStream(filename, { flags: 'a' });
+    if (isSnapshot == false && process.env.MAKE_SNAPSHOTS === '1' && transactions.length) {
+      const filename = this.snapshotFileFromBlockNumber(transactions[0].blockNumber);
+      const stream = fsWithCallbacks.createWriteStream(`./snapshots/${filename}`, { flags: 'a' });
       for (const tx of transactions) {
         await new Promise((resolve, reject) => {
           stream.write(
-            `${JSON.stringify(tx)}\n`,
+            `${JSON.stringify(tx)},\n`,
             error => {
               if (error) {
                 return reject(error);

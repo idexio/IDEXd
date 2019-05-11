@@ -2,6 +2,7 @@ lib
 *.log
 cache/*
 /containers
+snapshots/*
 downloads/*
 ipc/status.json
 settings.json
