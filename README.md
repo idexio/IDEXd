@@ -129,7 +129,7 @@ npm install -g @idexio/idexd-cli
 ```
 idex config
 ```
-IDEXd provides prompts asking for a staking wallet that contains at least 10,000 IDEX for 7 days. Go to [MyEtherWallet](https://www.myetherwallet.com/interface/sign-message) or your preferred wallet software to sign the challenge and provide the `sig` value to prove that you control the wallet.
+IDEXd provides prompts asking for a staking wallet that contains at least 10,000 IDEX for 7 days. Go to [MyEtherWallet](https://vintage.myetherwallet.com/signmsg.html) or your preferred wallet software to sign the challenge and provide the `sig` value to prove that you control the wallet.
 
 IDEXd employs a cold-wallet design so that staked funds never need to leave the staking wallet for maximum security.
 
@@ -270,7 +270,7 @@ idex start --rpc <RPC endpoint URL including port>
 
 ## Getting Help and Reporting Issues
 
-For questions about getting started and help if you're stuck, please [reach out to our team on Discord](https://discord.gg/tQa9CAB). 
+For questions about getting started and help if you're stuck, please [reach out to our team on Discord](https://discord.gg/tQa9CAB).
 
 If you believe you have identified a bug in IDEXd, please [file an issue](https://github.com/idexio/idexd/issues).
 
