@@ -139,13 +139,15 @@ idex start
 ```
 IDEXd connects to the Ethereum network and downloads IDEX trade history data to serve to IDEX users. Depending on the resources of the underlying computer or VPS and network, the initial syncing process may take a few minutes to several hours.
 
-TODO: documentation on forcing a full sync vs fast sync
-
 #### A note on connectivity
 
 In order to serve data to IDEX users, IDEXd Nodes must be reachable from the public internet. Most home and office connections are not publicly reachable by default, so you may need to take steps like opening up specific ports on your router. IDEXd requires public TCP access to port 8443, and has limits on how frequently a node can change IP addresses.
 
 We recommend running IDEXd on an always-on, contected machine or a cloud-hosted compute instance.
+
+#### A note on stability
+
+Some IDEXd operators have reported better stability using a third-party, hosted Ethereum endpoints, such as [Infura](https://infura.io/), [Alchemy](https://alchemyapi.io/), or [CloudFlare](https://developers.cloudflare.com/distributed-web/ethereum-gateway), rather than the included [Parity Ethereum client](https://www.parity.io/ethereum/). See [Running IDEXd with a custom RPC endpoint](#running-idexd-with-a-custom-rpc-endpoint) for details on using a third-party provider.
 
 ## Managing IDEXd
 
@@ -211,7 +213,7 @@ The number of credits earned by the staker this period, over the total amount of
 
 *Last Period Earnings*
 
-Amount of ETH earned by the staker during the last period. Note that payouts less than $3 USD based on ETH spot price at period close are rolled over to the next period.
+Amount of ETH earned by the staker during the last period. Note that payouts less than $10 USD based on ETH spot price at period close are rolled over to the next period.
 
 Notice: This will read “0.000000 ETH” immediately after a period has ended and will be updated once the period earnings are calculated and sent by IDEX. This happens with 48 hours of a period close.
 
@@ -263,7 +265,7 @@ $ idex start
 
 #### Running IDEXd with a custom RPC endpoint
 
-IDEXd ships with its own copy of the [Parity Ethereum Client](https://www.parity.io/ethereum/) and uses Parity to load data from the Ethereum blockchain. To use a different Etheruem node, you can specify a custom RPC endpoint
+IDEXd ships with its own copy of the [Parity Ethereum client](https://www.parity.io/ethereum/) and uses Parity to load data from the Ethereum blockchain. To use a different Etheruem node, you can specify a custom RPC endpoint
 ```
 idex start --rpc <RPC endpoint URL including port>
 ```
