@@ -1,6 +1,6 @@
 # [DISCONTINUED] IDEXd: IDEX Staking Tier 3
 
-**Note: IDEXd has been discontinued and replaced by the [IDEX Staking Replicator](https://github.com/idexio/staking-replicator). The last period for which IDEXd will earn credits ends 2020-12-20 11:59 UTC.**
+**Note: IDEXd has been discontinued and replaced by the [IDEX Staking Replicator](https://github.com/idexio/staking-replicator). The last period for which IDEXd will earn credits ends 2020-12-20 23:59 UTC.**
 
 ## Introduction
 
