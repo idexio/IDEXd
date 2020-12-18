@@ -1,6 +1,6 @@
-# IDEXd: IDEX Staking Tier 3 [beta]
+# [DISCONTINUED] IDEXd: IDEX Staking Tier 3
 
-**Note: IDEXd v0.2.1 will continue to provide historical trade data services and earn fees after the [IDEX 2.0](https://idex.io) launch. A new version of the staking client specific to IDEX 2.0 is planned in the near future.**
+**Note: IDEXd has been discontinued and replaced by the [IDEX Staking Replicator](https://github.com/idexio/staking-replicator). The last period for which IDEXd will earn credits ends 2020-12-20 11:59 UTC.**
 
 ## Introduction
 
