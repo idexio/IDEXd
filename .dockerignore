@@ -8,4 +8,8 @@ downloads/*
 snapshots/*
 settings.json
 node_modules
-npm-debug.log
+*.log
+Dockerfile*
+Makefile
+README*
+LICENSE

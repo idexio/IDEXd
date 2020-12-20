@@ -1,11 +1,14 @@
 version: '3.3'
-            
+
 services:
     parity:
         image: parity/parity:stable
+        container_name: parity
         env_file: aurad_config.env
         volumes:
-            - parity:/eth
+          - type: bind
+            source: ${HOME}/.idexd/eth
+            target: /eth
         command: ["--light", "--jsonrpc-interface=all", "--base-path", "/eth"]
         ports:
             - "127.0.0.1:8545:8545"
@@ -24,6 +27,7 @@ services:
         user: root
     mysql:
         image: mysql:5.7
+        container_name: mysql
         env_file: aurad_config.env
         volumes:
             - type: bind
@@ -35,6 +39,7 @@ services:
             - "127.0.0.1:33006:3306"
     idexd:
         image: idexio/idexd:0.2.0
+        container_name: idexd
         depends_on:
           - "mysql"
         volumes:
@@ -67,6 +72,7 @@ services:
           - "mysql:db.local"
     aurad:
         image: auroradao/aurad:0.1.4
+        container_name: aurad
         entrypoint: ["echo", "aurad is now idexd, exiting"]
 volumes:
   parity:

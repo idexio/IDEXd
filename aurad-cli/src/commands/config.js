@@ -67,7 +67,7 @@ class ConfigCommand extends Command {
     await docker.ensureDirs();
     const {flags} = this.parse(ConfigCommand);
     console.log(messages.WALLET_EXPLAINER);
- 
+
     const containers = await docker.getRunningContainerIds();
     if (containers['idexd']) {
       console.log(`Error: idexd is running, please run 'idex stop' before updating your config`);
@@ -77,8 +77,8 @@ class ConfigCommand extends Command {
       console.log(`Error: an older version of aurad is running, please run 'idex stop' before updating your config`);
       return;
     }
-   
-    let coldWallet = await cli.prompt('    ' + chalk.blue.bgWhite(messages.WALLET_PROMPT));      
+
+    let coldWallet = await cli.prompt('    ' + chalk.blue.bgWhite(messages.WALLET_PROMPT));
     let challenge;
     try {
       challenge = await getChallenge(coldWallet);
@@ -88,20 +88,20 @@ class ConfigCommand extends Command {
       } else {
         console.log(`    ${chalk.red('ERROR')}: Unknown error getting signing challenge`);
       }
-      return;   
+      return;
     }
-    
+
     const { balance } = await getBalance(coldWallet);
-    
+
     console.log('');
-    
+
     let balanceFormatted = (new BigNumber(balance)).dividedBy(new BigNumber('1000000000000000000')).toString();
-    
+
     console.log(`\n    Your staked ${chalk.cyan('IDEX')} balance is ${balanceFormatted}.`);
-    console.log(`    Use https://www.myetherwallet.com/interface/sign-message or your preferred wallet software to sign this *exact* message:\n    ${chalk.blue.bgWhite(challenge)}${chalk.white.bgBlack('  ')}\n`);
+    console.log(`    Use https://vintage.myetherwallet.com/signmsg.html or your preferred wallet software to sign this *exact* message:\n    ${chalk.blue.bgWhite(challenge)}${chalk.white.bgBlack('  ')}\n`);
 
     let signature = await cli.prompt('    "sig" value', {type: 'mask'});
-    
+
     let recovered;
     try {
       recovered = await parity.web3.eth.accounts.recover(challenge, signature);
@@ -109,31 +109,31 @@ class ConfigCommand extends Command {
       console.log('Error decoding sig value');
       return;
     }
-    
+
     if (recovered.toLowerCase() != coldWallet.toLowerCase()) {
       console.log(`    ${chalk.red('ERROR')}: Your cold wallet is ${coldWallet.toLowerCase()} but you signed with ${recovered.toLowerCase()}`);
       return;
     }
-    
+
     console.log('    Wallet signature confirmed.');
 
     let newAccount = await parity.web3.eth.accounts.create(crypto.randomBytes(64).toString('hex'));
-    
-    try {   
-      let result = await submitChallenge(coldWallet, newAccount.address, signature);  
+
+    try {
+      let result = await submitChallenge(coldWallet, newAccount.address, signature);
 
       const buffer = await crypto.randomBytes(16);
       const token = buffer.toString('hex');
-      
+
       let keystore = parity.web3.eth.accounts.encrypt(newAccount.privateKey, token);
-  
+
       const settings = {
         coldWallet,
         token,
         hotWallet: keystore,
       };
-  
-      fs.writeFileSync(`${homedir}/.idexd/ipc/settings.json`, JSON.stringify(settings));        
+
+      fs.writeFileSync(`${homedir}/.idexd/ipc/settings.json`, JSON.stringify(settings));
       console.log('\n    Staking wallet confirmed. Run \'idex start\' to download IDEX trade history and begin staking.\n');
     } catch(e) {
       console.log('\n    Error submitting cold wallet challenge');
