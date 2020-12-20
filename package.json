@@ -37,7 +37,7 @@
     "request": "^2.88.0",
     "request-promise": "^4.2.2",
     "require-all": "^3.0.0",
-    "sequelize": "^4.40.0",
+    "sequelize": "^5.15.1",
     "typedarray-to-buffer": "^3.1.5",
     "web3": "1.0.0-beta.36",
     "websocket": "^1.0.28",
