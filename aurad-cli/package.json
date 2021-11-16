@@ -33,7 +33,7 @@
   "devDependencies": {
     "@oclif/dev-cli": "^1",
     "@oclif/test": "^1",
-    "aws-sdk": "^2.377.0",
+    "aws-sdk": "^2.814.0",
     "chai": "^4",
     "eslint": "^5.5",
     "eslint-config-oclif": "^3.1",
