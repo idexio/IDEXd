@@ -38,7 +38,7 @@
     "eslint": "^5.5",
     "eslint-config-oclif": "^3.1",
     "globby": "^8",
-    "minimist": "^1.2.0",
+    "minimist": "^1.2.6",
     "mocha": "^5",
     "nyc": "^13"
   },
